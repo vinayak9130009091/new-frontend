@@ -63,7 +63,7 @@ const CreateOrganizerUpdate = ({ OrganizerData, onClose }) => {
     value: account._id,
     label: account.accountName,
   }));
-
+  console.log(AccountsOptions);
   const OrganizerTemplateOptions = organizerTemplate.map((organizertemp) => ({
     value: organizertemp._id,
     label: organizertemp.organizerName,
@@ -360,7 +360,7 @@ const CreateOrganizerUpdate = ({ OrganizerData, onClose }) => {
   return (
     <Container>
       <Paper elevation={3} style={{ padding: "20px" }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h6" gutterBottom>
           Update Organizer
         </Typography>
 
@@ -402,7 +402,7 @@ const CreateOrganizerUpdate = ({ OrganizerData, onClose }) => {
           style={{ marginBottom: "10px" }}
         />
 
-        <FormControlLabel control={<Switch checked={reminder} onChange={handleRemindersChange} color="primary" />} label="Reminders" />
+        {/* <FormControlLabel control={<Switch checked={reminder} onChange={handleRemindersChange} color="primary" />} label="Reminders" /> */}
 
         {organizerTemp && (
           <form key={organizerTemp.organizertemplateid} id={organizerTemp.organizertemplateid} className="template-form">
@@ -484,15 +484,15 @@ const CreateOrganizerUpdate = ({ OrganizerData, onClose }) => {
           </form>
         )}
 
-        <Grid container spacing={2} style={{ marginTop: "20px" }}>
-          <Grid item>
+        <Grid container spacing={2} style={{ marginTop: "20px", marginLeft: "3px" }} display="flex" gap={3} alignItems="center">
+          <Grid>
             {/* <Link to={`/accountsdash/organizers/${selectedAccounts?.value}`}> */}
             <Button variant="contained" color="primary" onClick={createOrganizerOfAccount}>
               Save
             </Button>
             {/* </Link> */}
           </Grid>
-          <Grid item>
+          <Grid>
             <Button variant="outlined" color="secondary" onClick={handleOrganizerFormClose}>
               Cancel
             </Button>

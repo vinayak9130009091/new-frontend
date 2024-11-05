@@ -1718,7 +1718,8 @@ const PipelineTemp = () => {
   };
 
   // Function to render content based on action
-  const renderActionContent = (action) => {
+  const renderActionContent = (action, conditions, templates) => {
+    console.log("vinayak", conditions, templates);
     switch (action) {
       case "Send invoice":
         return (
@@ -1807,7 +1808,7 @@ const PipelineTemp = () => {
       return updatedAutomations;
     });
 
-    console.log("Saved Automations for Stage", stageIndex, ":", newAutomations);
+    //console.log("Saved Automations for Stage", stageIndex, ":", newAutomations);
     setAutoFormOpen(false);
     // setItems([]); // Clear items after saving
   };
@@ -2257,7 +2258,7 @@ const PipelineTemp = () => {
                                             <RiDeleteBin6Line />
                                           </IconButton>
                                         </Box>
-                                        {renderActionContent(item.action)}
+                                        {renderActionContent(item.action, item.conditions, item.templates)}
                                       </Box>
                                     </Box>
                                   ))}

@@ -5,9 +5,12 @@ import { toast } from "react-toastify";
 import { useNavigate, useParams, useRouteLoaderData } from "react-router-dom";
 import CreateInvoice from "../invoices-nav/CreateInvoice";
 import UpdateInvoice from "../invoices-nav/UpdateInvoice";
+import { jsPDF } from "jspdf";
+import "jspdf-autotable";
 
 const Invoice = () => {
   const navigate = useNavigate();
+  const ACCOUNT_API = process.env.REACT_APP_ACCOUNTS_URL;
   const INVOICES_API = process.env.REACT_APP_INVOICES_URL;
   const [showInvoiceTemplateForm, setShowInvoiceTemplateForm] = useState(false);
   const [showInvoiceUpdateForm, setShowInvoiceUpdateForm] = useState(false);
@@ -144,6 +147,254 @@ const Invoice = () => {
     }
   };
 
+  const handlePrint = async (_id) => {
+    try {
+      const response = await fetch(`${INVOICES_API}/workflow/invoices/invoice/${_id}`);
+      const invoiceData = await response.json();
+      console.log(invoiceData);
+      const accountId = invoiceData.invoice.account;
+      const accountResponse = await fetch(`${ACCOUNT_API}/accounts/accountdetails/${accountId}`);
+      const accountData = await accountResponse.json();
+      console.log(accountData);
+      console.log(accountData.account.accountName);
+
+      const accountName = accountData.account.accountName || "Unknown Account";
+      // Construct the HTML for printing
+      const printContent = `
+
+            <style>
+          body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+
+          }
+          .invoice-container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+
+          }
+          h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+          }
+          p {
+            font-size: 16px;
+            color: #555;
+            margin: 5px 0;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+          }
+          th, td {
+            border: 1px solid #dddddd;
+            padding: 8px;
+            text-align: left;
+          }
+          th {
+            background-color: #f2f2f2;
+          }
+          .summary-table {
+            width: 50%;
+            margin-left: auto;
+            margin-top: 20px;
+            border: none;
+          }
+          .summary-table td {
+            border: none;
+            padding: 10px 0;
+          }
+          .total-row td {
+            font-weight: bold;
+          }
+        </style>
+        <div style="font-family: Arial, sans-serif; padding: 35px;">
+          <h1>Invoice Number #${invoiceData.invoice.invoicenumber}</h1>
+          <p><strong>Date:</strong> ${new Date(invoiceData.invoice.invoicedate).toLocaleDateString()}</p>
+          <p><strong>${accountName}</strong></p>
+          <p><strong>Description:</strong> ${invoiceData.invoice.description}</p>
+          
+
+         <table border="1" cellspacing="0" cellpadding="8" style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th>Product/Service</th>
+                <th>Rate</th>
+                <th>Quantity</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoiceData.invoice.lineItems
+                .map(
+                  (item) => `
+                <tr>
+                  <td>${item.productorService}</td>
+                  <td>$${item.rate}</td>
+                  <td>${item.quantity}</td>
+                  <td>$${item.amount}</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+
+                <table class="summary-table">
+            <tbody>
+              <tr>
+                <td><strong>Subtotal</strong></td>
+                <td>$${invoiceData.invoice.summary.subtotal.toFixed(2)}</td>
+              </tr>
+              <tr>
+                <td><strong>Tax</strong></td>
+                <td>$${invoiceData.invoice.summary.taxTotal.toFixed(2)}</td>
+              </tr>
+              <tr class="total-row">
+                <td><strong>Total</strong></td>
+                <td>$${invoiceData.invoice.summary.total.toFixed(2)}</td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
+      `;
+
+      // Open a new window and print the content
+      const printWindow = window.open("", "_blank");
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Print Invoice</title>
+          </head>
+          <body onload="window.print(); window.close();">
+            ${printContent}
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+    } catch (error) {
+      console.error("Error printing invoice:", error);
+      toast.error("Failed to print invoice");
+    }
+  };
+
+  // Function to download invoice as PDF
+  // const handleDownload = async (_id) => {
+  //   try {
+  //     const response = await fetch(`${INVOICES_API}/workflow/invoices/invoice/${_id}`);
+  //     const invoiceData = await response.json();
+
+  //     const doc = new jsPDF();
+
+  //     // Add invoice details to PDF
+  //     doc.setFontSize(12);
+  //     doc.text(`Invoice Number: ${invoiceData.invoice.invoicenumber}`, 10, 10);
+  //     doc.text(`Date: ${new Date(invoiceData.invoice.invoicedate).toLocaleDateString()}`, 10, 20);
+  //     doc.text(`Description: ${invoiceData.invoice.description}`, 10, 30);
+  //     doc.text("Line Items:", 10, 40);
+
+  //     const lineItems = invoiceData.invoice.lineItems;
+  //     let yPosition = 50;
+
+  //     lineItems.forEach((item) => {
+  //       doc.text(`${item.productorService} - Rate: $${item.rate} - Quantity: ${item.quantity} - Amount: $${item.amount}`, 10, yPosition);
+  //       yPosition += 10;
+  //     });
+
+  //     doc.text(`Subtotal: $${invoiceData.invoice.summary.subtotal.toFixed(2)}`, 10, yPosition);
+  //     yPosition += 10;
+  //     doc.text(`Tax: $${invoiceData.invoice.summary.taxTotal.toFixed(2)}`, 10, yPosition);
+  //     yPosition += 10;
+  //     doc.text(`Total: $${invoiceData.invoice.summary.total.toFixed(2)}`, 10, yPosition);
+
+  //     // Save the PDF to local storage
+  //     const pdfBlob = doc.output("blob");
+  //     const pdfUrl = URL.createObjectURL(pdfBlob);
+  //     const a = document.createElement("a");
+  //     a.href = pdfUrl;
+  //     a.download = `Invoice_${invoiceData.invoice.invoicenumber}.pdf`;
+  //     document.body.appendChild(a);
+  //     a.click();
+  //     document.body.removeChild(a);
+
+  //     toast.success("Invoice downloaded successfully");
+  //   } catch (error) {
+  //     console.error("Error downloading invoice:", error);
+  //     toast.error("Failed to download invoice");
+  //   }
+  // };
+  const handleDownload = async (_id) => {
+    try {
+      const response = await fetch(`${INVOICES_API}/workflow/invoices/invoice/${_id}`);
+      const invoiceData = await response.json();
+
+      const doc = new jsPDF();
+
+      // Set up styles for the PDF
+      doc.setFont("Arial", "normal");
+      doc.setFontSize(14);
+      doc.text(`Invoice Number: ${invoiceData.invoice.invoicenumber}`, 10, 10);
+      doc.text(`Date: ${new Date(invoiceData.invoice.invoicedate).toLocaleDateString()}`, 10, 20);
+      doc.text(`Description: ${invoiceData.invoice.description}`, 10, 30);
+
+      // Add Account Name
+      // const accountName = invoiceData.invoice.accountName || "Unknown Account";
+      const accountId = invoiceData.invoice.account;
+      const accountResponse = await fetch(`${ACCOUNT_API}/accounts/accountdetails/${accountId}`);
+      const accountData = await accountResponse.json();
+      console.log(accountData);
+      console.log(accountData.account.accountName);
+
+      const accountName = accountData.account.accountName || "Unknown Account";
+      doc.text(`Account Name: ${accountName}`, 10, 40);
+
+      // Create line items table
+      doc.autoTable({
+        startY: 50,
+        head: [["Product/Service", "Rate", "Quantity", "Amount"]],
+        body: invoiceData.invoice.lineItems.map((item) => [item.productorService, `$${item.rate}`, item.quantity, `$${item.amount}`]),
+        theme: "grid", // Choose a theme, 'grid', 'striped', etc.
+        headStyles: {
+          fillColor: [242, 242, 242], // Light gray background for header
+          textColor: [51, 51, 51], // Dark text color
+        },
+        styles: {
+          textColor: [85, 85, 85], // Text color
+          fontSize: 12,
+          halign: "left", // Align text to left
+        },
+      });
+
+      // Summary section
+      const summaryY = doc.autoTable.previous.finalY + 10;
+      doc.setFontSize(12);
+      doc.text(`Subtotal: $${invoiceData.invoice.summary.subtotal.toFixed(2)}`, 10, summaryY);
+      doc.text(`Tax: $${invoiceData.invoice.summary.taxTotal.toFixed(2)}`, 10, summaryY + 10);
+      doc.setFontSize(14);
+      doc.text(`Total: $${invoiceData.invoice.summary.total.toFixed(2)}`, 10, summaryY + 20);
+
+      // Save the PDF to local storage
+      const pdfBlob = doc.output("blob");
+      const pdfUrl = URL.createObjectURL(pdfBlob);
+      const a = document.createElement("a");
+      a.href = pdfUrl;
+      a.download = `Invoice_${invoiceData.invoice.invoicenumber}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+
+      toast.success("Invoice downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      toast.error("Failed to download invoice");
+    }
+  };
+
   return (
     <Box sx={{ mt: 2 }}>
       <Button variant="contained" onClick={handleCreateInvoiceClick} sx={{ mb: 3 }}>
@@ -223,6 +474,12 @@ const Invoice = () => {
 
                         <Typography sx={{ fontSize: "12px", fontWeight: "bold" }} onClick={() => handleDuplicate(row._id)}>
                           Duplicate
+                        </Typography>
+                        <Typography sx={{ fontSize: "12px", fontWeight: "bold" }} onClick={() => handlePrint(row._id)}>
+                          Print
+                        </Typography>
+                        <Typography sx={{ fontSize: "12px", fontWeight: "bold" }} onClick={() => handleDownload(row._id)}>
+                          Download
                         </Typography>
 
                         <Typography sx={{ fontSize: "12px", color: "red", fontWeight: "bold" }} onClick={() => handleDelete(row._id)}>

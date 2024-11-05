@@ -8,7 +8,7 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { toast } from "react-toastify";
 const AccountOrganizer = () => {
   const ACCOUNT_API = process.env.REACT_APP_ACCOUNTS_URL;
-
+  const ORGANIZER_TEMP_API = process.env.REACT_APP_ORGANIZER_TEMP_URL;
   const { data } = useParams();
 
   const [organizerTemplate, setOrganizerTemplate] = useState([]);
@@ -26,7 +26,7 @@ const AccountOrganizer = () => {
 
   const fetchOrganizerTemplateData = async () => {
     try {
-      const url = "http://127.0.0.1:7600/workflow/organizers/organizertemplate/";
+      const url = `${ORGANIZER_TEMP_API}/workflow/organizers/organizertemplate/`;
       const response = await fetch(url);
       const result = await response.json();
       setOrganizerTemplate(result.OrganizerTemplates);
@@ -80,7 +80,7 @@ const AccountOrganizer = () => {
 
   const fetchOrganizerTemplateDataByTempId = async (selectedOrganizerTempid) => {
     try {
-      const url = `http://127.0.0.1:7600/workflow/organizers/organizertemplate/${selectedOrganizerTempid}`;
+      const url = `${ORGANIZER_TEMP_API}/workflow/organizers/organizertemplate/${selectedOrganizerTempid}`;
       const response = await fetch(url);
       const result = await response.json();
       console.log(result);
@@ -122,7 +122,7 @@ const AccountOrganizer = () => {
   }));
 
   const handleOrganizerFormClose = () => {
-    setTimeout(() => {}, 1000);
+    navigate(`/accountsdash/organizers/${data}`);
   };
 
   //Preview
@@ -324,7 +324,7 @@ const AccountOrganizer = () => {
     };
 
     console.log(raw);
-    const url = "http://127.0.0.1:7600/workflow/orgaccwise/organizeraccountwise/org";
+    const url = `${ORGANIZER_TEMP_API}/workflow/orgaccwise/organizeraccountwise/org`;
 
     fetch(url, requestOptions)
       .then((response) => response.json())

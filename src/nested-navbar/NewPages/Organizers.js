@@ -50,7 +50,7 @@ const Organizers = () => {
       redirect: "follow",
     };
 
-    fetch(`http://127.0.0.1:7600/workflow/orgaccwise/organizeraccountwise/${_id}`, requestOptions)
+    fetch(`${ORGANIZER_TEMP_API}/workflow/orgaccwise/organizeraccountwise/${_id}`, requestOptions)
       .then((response) => response.json())
       .then((result) => {
         console.log(result);
@@ -114,6 +114,119 @@ const Organizers = () => {
   };
   const handleClosePreview = () => {
     setPreviewDialogOpen(false); // Close the dialog
+  };
+
+  // const printOrganizerData = (id) => {
+  //   const organizer = organizerTemplatesData.find((org) => org._id === id);
+  //   console.log(organizer);
+  //   console.log(organizer.sections);
+  //   if (organizer) {
+  //     const printWindow = window.open("", "_blank");
+  //     printWindow.document.write(`
+  //       <html>
+  //         <head>
+  //           <title>Organizer Data</title>
+  //           <style>
+  //             body { font-family: Arial, sans-serif; }
+  //             h1 { color: #2c59fa; }
+  //             table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+  //             th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+  //             th { background-color: #f4f4f4; }
+  //           </style>
+  //         </head>
+  //         <body>
+  //           <h1>Organizer Data</h1>
+  //           <table>
+  //             <tr>
+  //               <th>Name</th>
+  //               <th>Last Updated</th>
+  //               <th>Status</th>
+  //               <th>Progress</th>
+  //               <th>Seal</th>
+  //             </tr>
+  //             <tr>
+  //               <td>${organizer.organizertemplateid.organizerName}</td>
+  //               <td>${organizer.updatedAt}</td>
+  //               <td>${organizer.issealed ? "Sealed" : "Unsealed"}</td>
+  //               <td>${organizer.organizertemplateid.sections.length}</td>
+  //               <td>${organizer.issealed ? "Sealed" : "Not Sealed"}</td>
+  //             </tr>
+  //           </table>
+  //         </body>
+  //       </html>
+  //     `);
+  //     printWindow.document.close();
+  //     printWindow.print();
+  //   } else {
+  //     toast.error("Organizer not found.");
+  //   }
+  // };
+  const printOrganizerData = (id) => {
+    const organizer = organizerTemplatesData.find((org) => org._id === id);
+    console.log(organizer);
+
+    if (organizer) {
+      const printWindow = window.open("", "_blank");
+
+      // Constructing the sections HTML
+      const sectionsHtml = organizer.organizertemplateid.sections
+        .map((section) => {
+          const formElementsHtml = section.formElements
+            .map((element) => {
+              return `
+            <div>
+              <strong>${element.text}</strong>
+              ${
+                element.options && element.options.length > 0
+                  ? `
+                <div>Options: ${element.options.map((opt) => opt.text).join(", ")}</div>
+              `
+                  : ""
+              }
+            </div>
+          `;
+            })
+            .join("");
+
+          return `
+          <div style="margin-bottom: 20px;">
+            <h3>${section.name}</h3>
+           
+            ${formElementsHtml}
+          </div>
+        `;
+        })
+        .join("");
+
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>Organizer Data</title>
+            <style>
+              body { font-family: Arial, sans-serif; }
+              h1 { color: #2c59fa; }
+              h3 { color: #555; }
+              table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+              th, td { padding: 8px 12px; border: 1px solid #ddd; text-align: left; }
+              th { background-color: #f4f4f4; }
+            </style>
+          </head>
+          <body>
+            <h1>Organizer Data</h1>
+           
+            <div>
+             
+              ${sectionsHtml}
+            </div>
+          </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      printWindow.print();
+    } else {
+      toast.error("Organizer not found.");
+    }
   };
 
   return (
@@ -192,6 +305,9 @@ const Organizers = () => {
                         </Typography>
                         <Typography sx={{ fontSize: "12px", fontWeight: "bold" }} onClick={() => handleEdit(row._id)}>
                           Change Answers    
+                        </Typography>
+                        <Typography sx={{ fontSize: "12px", fontWeight: "bold" }} onClick={() => printOrganizerData(row._id)}>
+                          Print
                         </Typography>
                       </Box>
                     )}
