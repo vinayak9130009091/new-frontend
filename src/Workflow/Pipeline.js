@@ -1,24 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import './pipeline.css'
-import { useDrag, DndProvider, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
-import { RiDeleteBin5Line } from 'react-icons/ri';
-import axios from 'axios';
-import { useTheme } from '@mui/material/styles';
-import EditJobCard from './updateJobCard'
-import useMediaQuery from '@mui/material/useMediaQuery';
+import React, { useEffect, useState } from "react";
+import "./pipeline.css";
+import { useDrag, DndProvider, useDrop } from "react-dnd";
+import { HTML5Backend } from "react-dnd-html5-backend";
+import { RiDeleteBin5Line } from "react-icons/ri";
+import axios from "axios";
+import { useTheme } from "@mui/material/styles";
+import EditJobCard from "./updateJobCard";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import { IoClose } from "react-icons/io5";
-import { toast } from 'react-toastify';
-import { Box, Button, CircularProgress, Drawer, TextField, Autocomplete, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
+import { toast } from "react-toastify";
+import { Box, Button, CircularProgress, Drawer, TextField, Autocomplete, Typography, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 // import Select from 'react-select';
-import { differenceInMinutes, differenceInHours, differenceInDays } from 'date-fns';
-
-import AddJobs from './AddJobs';
+import { differenceInMinutes, differenceInHours, differenceInDays } from "date-fns";
+import Priority from "../Templates/Priority/Priority";
+import AddJobs from "./AddJobs";
 const Pipeline = () => {
-
   const PIPELINE_API = process.env.REACT_APP_PIPELINE_TEMP_URL;
   const JOBS_API = process.env.REACT_APP_ADD_JOBS_URL;
-
 
   const [pipelineData, setPipelineData] = useState([]);
   const [selectedPipeline, setSelectedPipeline] = useState(null);
@@ -30,7 +28,7 @@ const Pipeline = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isEditDrawerOpen, setIsEditDrawerOpen] = useState(false);
   const theme = useTheme();
-  const isSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const handleDrawerOpen = () => {
     setIsDrawerOpen(true);
   };
@@ -63,31 +61,29 @@ const Pipeline = () => {
     }
   };
 
-
   const fetchJobData = async () => {
     try {
       const url = `${JOBS_API}/workflow/jobs/job/joblist/list`;
       const response = await fetch(url);
       const data = await response.json();
-      console.log('Job Data:', data); // Log the response to inspect it
+      console.log("Job Data:", data); // Log the response to inspect it
       setJobs(data.jobList);
     } catch (error) {
       console.error("Error fetching job data:", error);
     }
   };
 
-
   const fetchStages = async (pipelineId) => {
     try {
       const url = `${PIPELINE_API}/workflow/pipeline/pipeline/${pipelineId}`;
       const response = await fetch(url);
       if (!response.ok) {
-        throw new Error('Failed to fetch stages');
+        throw new Error("Failed to fetch stages");
       }
       const data = await response.json();
       return data.pipeline.stages;
     } catch (error) {
-      console.error('Error fetching stages:', error);
+      console.error("Error fetching stages:", error);
       return [];
     }
   };
@@ -107,14 +103,12 @@ const Pipeline = () => {
     setSelectedPipelineOption(option);
 
     if (option) {
-      const pipeline = pipelineData.find(p => p.pipelineName === option.label);
+      const pipeline = pipelineData.find((p) => p.pipelineName === option.label);
       if (pipeline) {
         handleBoardsList(pipeline);
       }
     }
-
   };
-
 
   const handleBoardsList = async (pipeline) => {
     setSelectedPipeline(pipeline);
@@ -131,18 +125,17 @@ const Pipeline = () => {
     setStages([]);
   };
 
-
-
   const updateJobStage = async (stage, item) => {
-    let data = JSON.stringify({ "stageid": stage._id });
+    let data = JSON.stringify({ stageid: stage._id });
     let config = {
-      method: 'post',
+      method: "post",
       maxBodyLength: Infinity,
       url: `${JOBS_API}/workflow/jobs/job/jobpipeline/updatestageid/${item.id}`,
-      headers: { 'Content-Type': 'application/json' },
-      data: data
+      headers: { "Content-Type": "application/json" },
+      data: data,
     };
-    axios.request(config)
+    axios
+      .request(config)
       .then((response) => {
         console.log(JSON.stringify(response.data));
       })
@@ -151,10 +144,9 @@ const Pipeline = () => {
       });
   };
 
-
   const JobCard = ({ job }) => {
     const [{ isDragging }, drag] = useDrag({
-      type: 'JOB_CARD',
+      type: "JOB_CARD",
       item: { id: job.id },
       collect: (monitor) => ({
         isDragging: !!monitor.isDragging(),
@@ -170,7 +162,7 @@ const Pipeline = () => {
 
     useEffect(() => {
       const intervalId = setInterval(() => {
-        setLastUpdatedTime(prevTime => new Date(prevTime));
+        setLastUpdatedTime((prevTime) => new Date(prevTime));
       }, 1000);
 
       return () => clearInterval(intervalId);
@@ -190,38 +182,38 @@ const Pipeline = () => {
       const daysDiff = differenceInDays(currentTime, jobTime);
 
       if (minutesDiff < 1) {
-        return 'just now';
+        return "just now";
       } else if (minutesDiff < 60) {
-        return `${minutesDiff} minute${minutesDiff === 1 ? '' : 's'} ago`;
+        return `${minutesDiff} minute${minutesDiff === 1 ? "" : "s"} ago`;
       } else if (hoursDiff < 24) {
-        return `${hoursDiff} hour${hoursDiff === 1 ? '' : 's'} ago`;
+        return `${hoursDiff} hour${hoursDiff === 1 ? "" : "s"} ago`;
       } else {
-        return `${daysDiff} day${daysDiff === 1 ? '' : 's'} ago`;
+        return `${daysDiff} day${daysDiff === 1 ? "" : "s"} ago`;
       }
     };
 
     const stripHtmlTags = (html) => {
-      const doc = new DOMParser().parseFromString(html, 'text/html');
+      const doc = new DOMParser().parseFromString(html, "text/html");
       return doc.body.textContent || "";
     };
 
     const truncateDescription = (description, maxLength = 30) => {
       if (description.length > maxLength) {
-        return description.slice(0, maxLength) + '...';
+        return description.slice(0, maxLength) + "...";
       }
       return description;
     };
 
     const getPriorityStyle = (priority) => {
       switch (priority.toLowerCase()) {
-        case 'urgent':
-          return { color: 'white', backgroundColor: '#0E0402', fontSize: '12px', borderRadius: '50px', padding: '3px 7px' };
-        case 'high':
-          return { color: 'white', backgroundColor: '#fe676e', fontSize: '12px', borderRadius: '50px', padding: '3px 7px' }; // light red background
-        case 'medium':
-          return { color: 'white', backgroundColor: '#FFC300', fontSize: '12px', borderRadius: '50px', padding: '3px 7px' }; // light orange background
-        case 'low':
-          return { color: 'white', backgroundColor: '#56c288', fontSize: '12px', borderRadius: '50px', padding: '3px 7px' }; // light green background
+        case "urgent":
+          return { color: "white", backgroundColor: "#0E0402", fontSize: "12px", borderRadius: "50px", padding: "3px 7px" };
+        case "high":
+          return { color: "white", backgroundColor: "#fe676e", fontSize: "12px", borderRadius: "50px", padding: "3px 7px" }; // light red background
+        case "medium":
+          return { color: "white", backgroundColor: "#FFC300", fontSize: "12px", borderRadius: "50px", padding: "3px 7px" }; // light orange background
+        case "low":
+          return { color: "white", backgroundColor: "#56c288", fontSize: "12px", borderRadius: "50px", padding: "3px 7px" }; // light green background
         default:
           return {};
       }
@@ -230,73 +222,86 @@ const Pipeline = () => {
     const truncateName = (name) => {
       const maxLength = 12;
       if (name.length > maxLength) {
-        return name.substring(0, maxLength) + '...';
+        return name.substring(0, maxLength) + "...";
       }
       return name;
     };
 
     const formatDate = (dateString) => {
-      if (!dateString) return '';
+      if (!dateString) return "";
       const date = new Date(dateString);
-      const options = { month: 'short', day: '2-digit', year: 'numeric' };
-      return date.toLocaleDateString('en-US', options);
+      const options = { month: "short", day: "2-digit", year: "numeric" };
+      return date.toLocaleDateString("en-US", options);
     };
 
     const startDateFormatted = formatDate(job.StartDate);
     const dueDateFormatted = formatDate(job.DueDate);
 
-
     const [isHovered, setIsHovered] = useState(false);
     const handleDelete = (_id) => {
-
-
-
       const requestOptions = {
         method: "DELETE",
-        redirect: "follow"
+        redirect: "follow",
       };
 
       fetch(`${JOBS_API}/workflow/jobs/job/` + _id, requestOptions)
         .then((response) => {
           if (!response.ok) {
-            throw new Error('Failed to delete item');
+            throw new Error("Failed to delete item");
           }
           return response.json();
         })
         .then((result) => {
           // console.log(result);
-          toast.success('Job deleted successfully');
+          toast.success("Job deleted successfully");
           fetchJobData();
         })
         .catch((error) => {
           console.error(error);
-          toast.error('Failed to delete item');
-        })
-
+          toast.error("Failed to delete item");
+        });
+    };
+    const JOBS_API = process.env.REACT_APP_ADD_JOBS_URL;
+    const [jobid, setjobid] = useState();
+    const [JobsData, setJobsData] = useState([]);
+    const [selectedStage, setSelectedStage] = useState();
+    const stagesoptions = stages.map((stage) => ({ value: stage._id, label: stage.name }));
+    const handleStageChange = (event, newValue) => {
+      setSelectedStage(newValue);
     };
     const handleEditJobCard = async (jobid) => {
       handleEditDrawerOpen();
-    }
+      setjobid(jobid);
+      const response = await fetch(`${JOBS_API}/workflow/jobs/job/joblist/listbyid/` + jobid);
 
+      if (!response.ok) {
+        throw new Error("Failed to fetch job data");
+      }
+      const data = await response.json();
+      setJobsData(data.jobList);
+      console.log(data.jobList);
+      setPriority(data.jobList.Priority);
+      console.log(data.jobList.Priority);
+    };
+    // console.log(selectedStage);
+    const [priority, setPriority] = useState("");
+    const handlePriorityChange = (priority) => {
+      setPriority(priority);
+    };
     return (
-      <Box className={`job-card ${isDragging ? 'dragging' : ''}`}
-        ref={drag}
-        onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}
-        onDrop={updateLastUpdatedTime}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: '10px' }}>
-          <Typography color={'black'}>{job.Account.join(', ')}</Typography>
-          {isHovered ? (
-            <RiDeleteBin5Line onClick={() => handleDelete(job.id)} style={{ cursor: 'pointer' }} />
-          ) : (
-            <span className='automation-batch'>1</span>
-          )}</Box>
+      <Box className={`job-card ${isDragging ? "dragging" : ""}`} ref={drag} onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)} onDrop={updateLastUpdatedTime}>
+        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "10px" }}>
+          <Typography color={"black"}>{job.Account.join(", ")}</Typography>
+          {isHovered ? <RiDeleteBin5Line onClick={() => handleDelete(job.id)} style={{ cursor: "pointer" }} /> : <span className="automation-batch">1</span>}
+        </Box>
 
-        <Typography sx={{ fontWeight: 'bold', marginBottom: '8px', cursor: 'pointer' }} color={'black'} onClick={() => handleEditJobCard(job.id)}>
+        <Typography sx={{ fontWeight: "bold", marginBottom: "8px", cursor: "pointer" }} color={"black"} onClick={() => handleEditJobCard(job.id)}>
           {truncateName(job.Name)}
         </Typography>
-        <Typography color={'black'} variant="body2" sx={{ marginBottom: '8px' }}>{job.JobAssignee.join(', ')}</Typography>
-        <Typography color={'black'} variant="body2" sx={{ marginBottom: '8px' }}>
+        <Typography color={"black"} variant="body2" sx={{ marginBottom: "8px" }}>
+          {job.JobAssignee.join(", ")}
+        </Typography>
+        <Typography color={"black"} variant="body2" sx={{ marginBottom: "8px" }}>
           {truncateDescription(stripHtmlTags(job.Description))}
         </Typography>
 
@@ -304,24 +309,58 @@ const Pipeline = () => {
 
         <br />
 
-        <Typography color={'black'} sx={{ marginBottom: '4px', mt: 2 }} variant="body2">
+        <Typography color={"black"} sx={{ marginBottom: "4px", mt: 2 }} variant="body2">
           Starts : {startDateFormatted}
         </Typography>
-        <Typography color={'black'} variant="body2">
+        <Typography color={"black"} variant="body2">
           Due : {dueDateFormatted}
         </Typography>
-        <Typography color={'black'} variant="body2" sx={{ marginBottom: '5px', mt: 2 }}>
+        <Typography color={"black"} variant="body2" sx={{ marginBottom: "5px", mt: 2 }}>
           {timeAgo()}
         </Typography>
+
+        <Drawer
+          anchor="right"
+          open={isEditDrawerOpen}
+          onClose={handleEditDrawerClose}
+          PaperProps={{
+            id: "tag-drawer",
+            sx: {
+              borderRadius: isSmallScreen ? "0" : "10px 0 0 10px",
+              width: isSmallScreen ? "100%" : 600,
+              maxWidth: "100%",
+              [theme.breakpoints.down("sm")]: {
+                width: "100%",
+              },
+            },
+          }}
+        >
+          <Box sx={{ borderRadius: isSmallScreen ? "0" : "15px" }} role="presentation">
+            <Box>
+              <Box style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "15px", background: "#EEEEEE" }}>
+                <Typography variant="h6">Edit job card</Typography>
+                <IoClose onClick={handleEditDrawerClose} style={{ cursor: "pointer" }} />
+              </Box>
+              <Box sx={{ pr: 2, pl: 2, pt: 2 }}>
+                <Typography>{job.Name}</Typography>
+                <Box>
+                  <label className="job-input-label">Stage</label>
+                  <Autocomplete size="small" options={stagesoptions} getOptionLabel={(option) => option.label} value={selectedStage} onChange={handleStageChange} renderInput={(params) => <TextField {...params} placeholder="Stages" variant="outlined" className="add-jobs-select-dropdown" />} sx={{ width: "100%", marginTop: "8px" }} />
+                </Box>
+                <Box mt={2}>
+                  <Priority onPriorityChange={handlePriorityChange} selectedPriority={priority} />
+                </Box>
+              </Box>
+            </Box>
+          </Box>
+        </Drawer>
       </Box>
     );
   };
 
-
-
   const Stage = ({ stage, selectedPipeline, handleDrop }) => {
     const [{ isOver }, drop] = useDrop({
-      accept: 'JOB_CARD',
+      accept: "JOB_CARD",
       drop: (item, monitor) => {
         handleDrop(item.id, stage.name);
         console.log(item.id);
@@ -334,31 +373,24 @@ const Pipeline = () => {
       }),
     });
 
-    const stageJobs = jobs.filter(job => job.Pipeline === selectedPipeline.pipelineName && job.Stage.includes(stage.name));
+    const stageJobs = jobs.filter((job) => job.Pipeline === selectedPipeline.pipelineName && job.Stage.includes(stage.name));
     const [displayCount, setDisplayCount] = useState(3);
     const displayedJobs = stageJobs.slice(0, displayCount);
     const truncatedStageName = stage.name.length > 20 ? `${stage.name.slice(0, 20)}...` : stage.name;
     return (
-      <Box
-        ref={drop} className={`stage ${isOver ? 'drag-over' : ''}`}
-
-      >
-        <Typography sx={{ marginBottom: '12px', }} className='stage-name'>
+      <Box ref={drop} className={`stage ${isOver ? "drag-over" : ""}`}>
+        <Typography sx={{ marginBottom: "12px" }} className="stage-name">
           {/* {stage.name} */}
-             {truncatedStageName}
+          {truncatedStageName}
         </Typography>
-        <Typography variant="body2" sx={{ marginBottom: '12px' }} >
+        <Typography variant="body2" sx={{ marginBottom: "12px" }}>
           {stageJobs.length > 0 && <span>({stageJobs.length})</span>}
         </Typography>
-        {displayedJobs.map(job => (
+        {displayedJobs.map((job) => (
           <JobCard key={job.id} job={job} />
         ))}
         {stageJobs.length > displayCount && (
-          <Button
-            variant="outlined"
-            onClick={() => setDisplayCount(displayCount + 5)}
-            sx={{ marginTop: '16px', alignSelf: 'center' }}
-          >
+          <Button variant="outlined" onClick={() => setDisplayCount(displayCount + 5)} sx={{ marginTop: "16px", alignSelf: "center" }}>
             Load More
           </Button>
         )}
@@ -366,20 +398,19 @@ const Pipeline = () => {
     );
   };
 
-
-  const optionpipeline = pipelineData.map(pipeline => ({
+  const optionpipeline = pipelineData.map((pipeline) => ({
     value: pipeline._id,
-    label: pipeline.pipelineName
+    label: pipeline.pipelineName,
   }));
   const handleDrop = (jobId, stageName) => {
-    const updatedJobs = jobs.map(job => {
+    const updatedJobs = jobs.map((job) => {
       if (job.id === jobId) {
         return { ...job, Stage: [stageName] };
       }
       return job;
     });
     setJobs(updatedJobs);
-    
+
     setTimeout(() => {
       fetchJobData();
     }, 1000);
@@ -394,7 +425,6 @@ const Pipeline = () => {
         ) : selectedPipeline ? (
           <>
             <Box mb={2}>
-
               <Autocomplete
                 value={selectedPipelineOption}
                 onChange={handleSelectChange}
@@ -405,7 +435,7 @@ const Pipeline = () => {
                   <Box
                     component="li"
                     {...props}
-                    sx={{ cursor: 'pointer', margin: '5px 10px' }} // Add cursor pointer style
+                    sx={{ cursor: "pointer", margin: "5px 10px" }} // Add cursor pointer style
                   >
                     {option.label}
                   </Box>
@@ -415,13 +445,13 @@ const Pipeline = () => {
                     {...params}
                     // label="Search pipelines..."
                     placeholder="Search pipelines..."
-                    sx={{ backgroundColor: '#fff' }}
+                    sx={{ backgroundColor: "#fff" }}
                   />
                 )}
                 // isClearable
                 className="pipeline-select"
               />
-              <Box display={'flex'} justifyContent={'space-between'} alignItems={'center'}>
+              <Box display={"flex"} justifyContent={"space-between"} alignItems={"center"}>
                 <Button variant="outlined" color="primary" onClick={handleBackToPipelineList} sx={{ mt: 2 }}>
                   Back to Pipeline List
                 </Button>
@@ -429,78 +459,38 @@ const Pipeline = () => {
                   Add Jobs
                 </Button>
               </Box>
-
             </Box>
             <Box>
-
-              <Box className='stage-container' display="flex" gap={2} >
+              <Box className="stage-container" display="flex" gap={2}>
                 {stages.map((stage, index) => (
                   <Stage key={index} stage={stage} selectedPipeline={selectedPipeline} handleDrop={handleDrop} />
                 ))}
               </Box>
             </Box>
             <Drawer
-              anchor='right'
+              anchor="right"
               open={isDrawerOpen}
               onClose={handleDrawerClose}
               PaperProps={{
-                id: 'tag-drawer',
+                id: "tag-drawer",
                 sx: {
-                  borderRadius: isSmallScreen ? '0' : '10px 0 0 10px',
-                  width: isSmallScreen ? '100%' : 600,
-                  maxWidth: '100%',
-                  [theme.breakpoints.down('sm')]: {
-                    width: '100%',
+                  borderRadius: isSmallScreen ? "0" : "10px 0 0 10px",
+                  width: isSmallScreen ? "100%" : 600,
+                  maxWidth: "100%",
+                  [theme.breakpoints.down("sm")]: {
+                    width: "100%",
                   },
-
-                }
+                },
               }}
             >
-              <Box sx={{ borderRadius: isSmallScreen ? '0' : '15px' }} role="presentation">
+              <Box sx={{ borderRadius: isSmallScreen ? "0" : "15px" }} role="presentation">
                 <Box>
-                  <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: "#EEEEEE" }}>
-                    <Typography variant="h6" >
-                      Add Job to {selectedPipeline ? selectedPipeline.pipelineName : ''}
-                    </Typography>
-                    <IoClose onClick={handleDrawerClose} style={{ cursor: 'pointer' }} />
+                  <Box style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "15px", background: "#EEEEEE" }}>
+                    <Typography variant="h6">Add Job to {selectedPipeline ? selectedPipeline.pipelineName : ""}</Typography>
+                    <IoClose onClick={handleDrawerClose} style={{ cursor: "pointer" }} />
                   </Box>
-                  <Box >
-
+                  <Box>
                     <AddJobs stages={stages} pipelineId={pipelineId} handleDrawerClose={handleDrawerClose} fetchJobData={fetchJobData} />
-
-                  </Box>
-                </Box>
-              </Box>
-            </Drawer>
-            <Drawer
-              anchor='right'
-              open={isEditDrawerOpen}
-              onClose={handleEditDrawerClose}
-              PaperProps={{
-                id: 'tag-drawer',
-                sx: {
-                  borderRadius: isSmallScreen ? '0' : '10px 0 0 10px',
-                  width: isSmallScreen ? '100%' : 600,
-                  maxWidth: '100%',
-                  [theme.breakpoints.down('sm')]: {
-                    width: '100%',
-                  },
-
-                }
-              }}
-            >
-              <Box sx={{ borderRadius: isSmallScreen ? '0' : '15px' }} role="presentation">
-                <Box>
-                  <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '15px', background: "#EEEEEE" }}>
-                    <Typography variant="h6" >
-                     Edit job card
-                    </Typography>
-                    <IoClose onClick={handleEditDrawerClose} style={{ cursor: 'pointer' }} />
-                  </Box>
-                  <Box sx={{ pr: 2, pl: 2, pt: 2 }}>
-
-                    <EditJobCard />
-
                   </Box>
                 </Box>
               </Box>
@@ -526,10 +516,7 @@ const Pipeline = () => {
                 <TableBody>
                   {pipelineData.map((pipeline, index) => (
                     <TableRow key={index} hover>
-                      <TableCell
-                        onClick={() => handleBoardsList(pipeline)}
-                        sx={{ color: 'primary.main', cursor: 'pointer', fontWeight: 'bold' }}
-                      >
+                      <TableCell onClick={() => handleBoardsList(pipeline)} sx={{ color: "primary.main", cursor: "pointer", fontWeight: "bold" }}>
                         {pipeline.pipelineName}
                       </TableCell>
                       <TableCell></TableCell>
