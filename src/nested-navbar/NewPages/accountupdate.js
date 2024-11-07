@@ -231,7 +231,7 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
     const selectedValues = selectedOptions.map((option) => option.value);
     setCombinedTeamMemberValues(selectedValues);
   };
-
+  console.log(combinedTeamMemberValues);
   //Account Data Integration
   const [accountName, setaccountName] = useState("");
   const [companyname, setcompanyname] = useState("");
@@ -283,6 +283,9 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
       // Set selected team members in state
       setSelectedUser(mappedTeamMembers.filter((member) => selectedAccount.teamMember.some((selected) => selected._id === member.value)));
 
+      setCombinedTeamMemberValues(
+        mappedTeamMembers.filter((member) => selectedAccount.teamMember.some((selected) => selected._id === member.value)).map((member) => member.value) // Extract only the 'value' (ID) here
+      );
       // Map Tags
       const mappedTags =
         selectedAccount.tags?.map((tag) => ({

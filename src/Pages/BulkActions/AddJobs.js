@@ -1,7 +1,10 @@
-import { Chip, Box, InputLabel, InputAdornment, IconButton, Popover, ListItem, ListItemText, Button, List, Grid, Typography, TextField, label, Switch, FormControlLabel, Autocomplete } from "@mui/material";
+import { Chip, InputLabel, List, Box, InputAdornment, IconButton, Popover, ListItem, ListItemText, Button, Grid, Typography, TextField, label, Switch, FormControlLabel, Autocomplete } from "@mui/material";
 import React, { useState, useEffect } from "react";
-import Priority from "../Templates/Priority/Priority";
-import Editor from "../Templates/Texteditor/Editor";
+import DeleteIcon from "@mui/icons-material/Delete";
+// import Priority from '../Templates/Priority/Priority';
+import Priority from "../../Templates/Priority/Priority";
+// import Editor from '../Templates/Texteditor/Editor';
+import Editor from "../../Templates/Texteditor/Editor";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
@@ -10,10 +13,10 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "react-toastify";
 import customParseFormat from "dayjs/plugin/customParseFormat";
 import axios from "axios";
-import DeleteIcon from "@mui/icons-material/Delete";
 // Initialize the plugin
 dayjs.extend(customParseFormat);
-const CreateJob = ({ charLimit = 4000 }) => {
+
+const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
   const ACCOUNT_API = process.env.REACT_APP_ACCOUNTS_URL;
   const JOBS_API = process.env.REACT_APP_ADD_JOBS_URL;
   const JOBS_TEMP_API = process.env.REACT_APP_JOBS_TEMP_URL;
@@ -55,9 +58,6 @@ const CreateJob = ({ charLimit = 4000 }) => {
     setPriority(priority);
   };
 
-  // const handlePriorityChange = (selectedOption) => {
-  //   setPriority(selectedOption);
-  // };
   const handleAbsolutesDates = (checked) => {
     setAbsoluteDates(checked);
   };
@@ -70,16 +70,18 @@ const CreateJob = ({ charLimit = 4000 }) => {
 
   //****************Accounts */
   const [accountdata, setaccountdata] = useState([]);
-  const [selectedaccount, setSelectedaccount] = useState();
+  const [selectedaccount, setSelectedaccount] = useState([]);
   const [combinedaccountValues, setCombinedaccountValues] = useState([]);
 
   const handleAccountChange = (event, newValue) => {
-    setSelectedaccount(newValue.map((option) => option.value));
-    // Map selected options to their values and send as an array
+    setSelectedaccount(newValue);
+    console.log("Selected Options:", newValue); // Log full option objects
     console.log(
       "Selected Values:",
       newValue.map((option) => option.value)
-    );
+    ); // Log just the values
+
+    // If you need to set combined account values separately
     setCombinedaccountValues(newValue.map((option) => option.value));
   };
 
@@ -87,22 +89,33 @@ const CreateJob = ({ charLimit = 4000 }) => {
     fetchAccountData();
   }, []);
 
+  const [accountoptions, setAccountOptions] = useState([]);
   const fetchAccountData = async () => {
     try {
       const response = await fetch(`${ACCOUNT_API}/accounts/accountdetails`);
       const data = await response.json();
       setaccountdata(data.accounts);
+
+      // Map accounts to options
+      const options = data.accounts.map((account) => ({
+        value: account._id,
+        label: account.accountName,
+      }));
+      setAccountOptions(options);
+
+      // Filter options based on selectedAccounts
+      const selectedOptions = options.filter((option) => selectedAccounts.includes(option.value));
+      console.log("Selected Options:", selectedOptions);
+      setSelectedaccount(selectedOptions);
+      setCombinedaccountValues(selectedOptions.map((option) => option.value));
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
 
-  // console.log(userdata);
-  const accountoptions = accountdata.map((account) => ({
-    value: account._id,
-    label: account.accountName,
-  }));
-  // user
+  useEffect(() => {
+    fetchAccountData();
+  }, []);
 
   const [userData, setUserData] = useState([]);
   useEffect(() => {
@@ -194,14 +207,48 @@ const CreateJob = ({ charLimit = 4000 }) => {
   // pipeline data
   const [pipelineData, setPipelineData] = useState([]);
   const [selectedPipeline, setselectedPipeline] = useState();
+  const [stages, setstagesData] = useState([]);
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [stagesoptions, setStagesOptions] = useState([]);
+
+  // const stagesoptions = stages.map(stage => ({ value: stage._id, label: stage.name }));
+
+  const handleStageChange = (event, newValue) => {
+    setSelectedStage(newValue);
+  };
 
   const handlePipelineChange = (selectedOptions) => {
-    setselectedPipeline(selectedOptions);
     console.log(selectedOptions);
+    setselectedPipeline(selectedOptions);
+    fetchPipelineDataByID(selectedOptions.value);
   };
+
   useEffect(() => {
     fetchPipelineData();
   }, []);
+
+  const fetchPipelineDataByID = async (pipelineid) => {
+    try {
+      const url = `${PIPELINE_API}/workflow/pipeline/pipeline/${pipelineid}`;
+      const response = await fetch(url);
+      const data = await response.json();
+      console.log(data.pipeline);
+
+      // Map stages for Autocomplete
+      const stageOptions = data.pipeline.stages.map((stage) => ({
+        label: stage.name,
+        value: stage._id,
+      }));
+
+      setStagesOptions(stageOptions);
+      setSelectedStage(stageOptions[0]);
+
+      // setPipelineData(data.pipeline);
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
   const fetchPipelineData = async () => {
     try {
       const url = `${PIPELINE_API}/workflow/pipeline/pipelines`;
@@ -244,7 +291,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
       startdate: startDate,
       enddate: dueDate,
     };
-
+    console.log(data);
     const config = {
       method: "post",
       maxBodyLength: Infinity,
@@ -256,7 +303,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
     axios
       .request(config)
       .then((response) => {
-        console.log("Job created successfully");
+        console.log("Job created successfully", response);
         toast.success("Job created successfully");
         navigate("/workflow/jobs");
         // Handle success, e.g., toast or redirect
@@ -266,6 +313,13 @@ const CreateJob = ({ charLimit = 4000 }) => {
         toast.error("Failed to create Job");
         // Handle errors, e.g., toast error
       });
+  };
+
+  const handleJobFormClose = () => {
+    if (onClose) {
+      onClose(); // Ensures onClose is a valid function before calling it
+    }
+    setTimeout(() => {}, 1000);
   };
 
   const [comments, setComments] = useState([]);
@@ -477,14 +531,8 @@ const CreateJob = ({ charLimit = 4000 }) => {
       <Box>
         <form>
           <Box>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography variant="h5" gutterBottom>
-                Add Jobs
-              </Typography>
-              <Button onClick={addCommentField}>Add comments</Button>
-            </Box>
-
-            <Box mb={2}>
+            <Button onClick={addCommentField}>Add comments</Button>
+            <Box mt={2} mb={2}>
               <hr />
             </Box>
             <Grid container spacing={2}>
@@ -497,12 +545,10 @@ const CreateJob = ({ charLimit = 4000 }) => {
                     options={accountoptions}
                     value={selectedaccount}
                     onChange={handleAccountChange}
+                    getOptionLabel={(option) => option.label}
+                    isOptionEqualToValue={(option, value) => option.value === value.value}
                     renderOption={(props, option) => (
-                      <Box
-                        component="li"
-                        {...props}
-                        sx={{ cursor: "pointer", margin: "5px 10px" }} // Add cursor pointer style
-                      >
+                      <Box component="li" {...props} sx={{ cursor: "pointer", margin: "5px 10px" }}>
                         {option.label}
                       </Box>
                     )}
@@ -510,6 +556,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
                     sx={{ width: "100%", marginTop: "8px" }}
                   />
                 </Box>
+
                 <Box mt={2}>
                   <label className="job-input-label">Pipeline</label>
 
@@ -530,11 +577,25 @@ const CreateJob = ({ charLimit = 4000 }) => {
                     )}
                     renderInput={(params) => <TextField {...params} sx={{ backgroundColor: "#fff" }} placeholder="Pipeline" variant="outlined" size="small" />}
                     sx={{ width: "100%", marginTop: "8px" }}
-                    clearOnEscape // Enable clearable functionality
+                    // clearOnEscape // Enable clearable functionality
+                  />
+                </Box>
+
+                <Box>
+                  <label className="job-input-label">Stage</label>
+                  <Autocomplete
+                    disabled // Disable the Autocomplete input
+                    size="small"
+                    options={stagesoptions}
+                    getOptionLabel={(option) => option.label}
+                    value={selectedStage}
+                    onChange={handleStageChange}
+                    renderInput={(params) => <TextField {...params} placeholder="Stages" variant="outlined" className="add-jobs-select-dropdown" />}
+                    sx={{ width: "100%", marginTop: "8px" }}
                   />
                 </Box>
                 <Box mt={2}>
-                  <label className="job-input-label">Template</label>
+                  <label className="job-input-label">Job Template</label>
                   <Autocomplete
                     options={optiontemp}
                     getOptionLabel={(option) => option.label}
@@ -697,22 +758,24 @@ const CreateJob = ({ charLimit = 4000 }) => {
                   sx={{
                     // borderLeft: '1px solid black',
                     height: "100%",
-                    margin: "0 20px",
+                    ml: 2,
                   }}
                 ></Box>
               </Grid>
-              <Grid item xs={12} sm={5} ml={{ xs: 0, sm: 3 }} className="right-side-container" mt={2}>
+              {/* <Grid item xs={12} sm={5} ml={{ xs: 0, sm: 3 }} className='right-side-container' mt={2}>
+                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                                    <Box>
+                                        <Typography variant='h5' fontWeight={'bold'}>Comments</Typography>
+                                        <Typography textAlign={'center'}>No comments attached</Typography>
+                                    </Box>
+                                    <Box mt={2}>
+                                        <Typography variant='h5' fontWeight={'bold'}>Wiki pages</Typography>
+                                        <Typography textAlign={'center'}>No wiki pages attached</Typography>
+                                    </Box>
+                                </Box>
+                            </Grid> */}
+              <Grid item xs={12} sm={5} mt={2}>
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <Box>
-                    {comments.map((comment, index) => (
-                      <div key={index} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <TextField value={comment} onChange={(e) => handleCommentChange(index, e.target.value)} placeholder={`Comment ${index + 1}`} variant="outlined" fullWidth multiline margin="normal" />
-                        <IconButton onClick={() => deleteCommentField(index)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </div>
-                    ))}
-                  </Box>
                   <Box mt={2}>
                     <Box style={{ display: "flex", alignItems: "center" }}>
                       {/* <EditCalendarRoundedIcon sx={{ fontSize: '120px', color: '#c6c7c7', }} /> */}
@@ -879,6 +942,16 @@ const CreateJob = ({ charLimit = 4000 }) => {
                     </Box>
                   </Box>
                 </Box>
+                <Box>
+                  {comments.map((comment, index) => (
+                    <div key={index} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <TextField value={comment} onChange={(e) => handleCommentChange(index, e.target.value)} placeholder={`Comment ${index + 1}`} variant="outlined" fullWidth multiline margin="normal" />
+                      <IconButton onClick={() => deleteCommentField(index)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </div>
+                  ))}
+                </Box>
               </Grid>
             </Grid>
             <Box mt={3}>
@@ -889,9 +962,10 @@ const CreateJob = ({ charLimit = 4000 }) => {
               <Button variant="contained" color="primary" onClick={createjob}>
                 Add
               </Button>
-              <Link to="/">
-                <Button variant="outlined">Cancel</Button>
-              </Link>
+              {/* <Link to='/'><Button variant="outlined" onClick={handleJobFormClose}>Cancel</Button></Link> */}
+              <Button onClick={handleJobFormClose} variant="outlined">
+                Cancel
+              </Button>
             </Box>
           </Box>
         </form>
@@ -900,4 +974,4 @@ const CreateJob = ({ charLimit = 4000 }) => {
   );
 };
 
-export default CreateJob;
+export default CreateBulkJob;

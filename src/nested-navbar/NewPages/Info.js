@@ -31,9 +31,13 @@ const Info = () => {
   const handleMenuOpen = () => {
     setOpen(true);
   };
-
   useEffect(() => {
+    // fetchAccountData();
     fetchContacts();
+    fetchAccount();
+  }, []);
+
+  const fetchAccount = () => {
     const requestOptions = {
       method: "GET",
       redirect: "follow",
@@ -56,7 +60,7 @@ const Info = () => {
         fetchaccountdatabyid(result.accountlist.id);
       })
       .catch((error) => console.error(error));
-  }, [ACCOUNT_API, data]);
+  };
 
   console.log(contacts);
   console.log(accountDatabyid);
@@ -141,6 +145,7 @@ const Info = () => {
   const handleEditDescription = () => {
     console.log("Editing description for contact ID:", selectedContact);
     setDescriptionModalOpen(true); // Open the description modal
+    fetchAccount();
   };
 
   const handleDescriptionSave = () => {
@@ -150,7 +155,8 @@ const Info = () => {
     updateDescriptiontoContact(selectedContact, description);
     // Add logic to save the description for the selected contact
     setDescriptionModalOpen(false);
-    setDescription(""); // Clear the description
+    fetchAccount();
+    // setDescription(""); // Clear the description
   };
 
   const updateDescriptiontoAccount = (description) => {
@@ -193,13 +199,16 @@ const Info = () => {
       .then((response) => response.json())
       .then((result) => {
         console.log(result);
-        toast.success("Contact Updated successfully!");
+        toast.success("Contact decription Updated successfully!");
+        fetchAccount();
+        handleMenuClose();
       })
       .catch((error) => console.error(error));
   };
 
   const handleDescriptionCancel = () => {
     setDescriptionModalOpen(false);
+    handleMenuClose();
     setDescription(""); // Clear the description if cancelled
   };
 
@@ -212,6 +221,8 @@ const Info = () => {
       .then((response) => response.json())
       .then((result) => {
         handleContactUpdated();
+        toast.success("contact is unlinked");
+        fetchAccount();
       })
       .catch((error) => console.error(error));
   };
@@ -275,7 +286,7 @@ const Info = () => {
         console.log(result);
         handleCloseDrawerofAddContact();
         toast.success("contact added successfully");
-        fetchContacts();
+        fetchAccount();
       })
       .catch((error) => console.error(error));
   };

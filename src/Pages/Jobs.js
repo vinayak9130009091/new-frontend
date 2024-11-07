@@ -241,6 +241,7 @@ const Example = () => {
           label: stage.name,
         }));
         setstages(stagesdata);
+        setSelectedstage(stagesdata[0]);
         console.log(stagesdata);
       }
     } catch (error) {
@@ -272,8 +273,11 @@ const Example = () => {
 
   const handlePipelineChange = (selectedOptions) => {
     setSelectedPipeline(selectedOptions);
+    fetchPipelineDataid(selectedOptions.value);
   };
 
+  // const [selectedStage, setSelectedStage] = useState(null);
+  const [stagesoptions, setStagesOptions] = useState([]);
   const [selectedstage, setSelectedstage] = useState("");
   const handleStageChange = (selectedOptions) => {
     setSelectedstage(selectedOptions);
@@ -384,7 +388,7 @@ const Example = () => {
     console.log(id);
     setjobid(id);
     try {
-      const url = `http://127.0.0.1:7550/workflow/jobs/job/joblist/listbyid/${id}`;
+      const url = `${JOBS_API}/workflow/jobs/job/joblist/listbyid/${id}`;
       const response = await fetch(url);
       if (!response.ok) {
         throw new Error("Failed to fetch data");
@@ -407,13 +411,13 @@ const Example = () => {
       setDueDate(dayjs(data.jobList.DueDate) || null);
       // (dayjs(tempvalues.startdate) || null)
       setStartDate(dayjs(data.jobList.StartDate) || null);
-      if (data.jobList && data.jobList.Stage) {
-        const stageData = {
-          value: data.jobList.Stage[0]._id,
-          label: data.jobList.Stage[0].name,
-        };
-        setSelectedstage(stageData);
-      }
+      // if (data.jobList && data.jobList.Stage) {
+      //   const stageData = {
+      //     value: data.jobList.Stage._id,
+      //     label: data.jobList.Stage.name,
+      //   };
+      //   setSelectedstage(stageData);
+      // }
       setPriority(data.jobList.Priority);
       setDescription(data.jobList.Description);
       if (data.jobList && data.jobList.Account) {
@@ -526,10 +530,8 @@ const Example = () => {
       }),
     },
   });
-  const handleSaveExitClick = () => {
-    updatejobdata();
-  };
-  const updatejobdata = () => {
+
+  const handleSaveClick = () => {
     const myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
 
@@ -537,7 +539,7 @@ const Example = () => {
       pipeline: selectedPipeline.value,
       stageid: selectedstage.value,
       jobassignees: combinedValues,
-      priority: priority,
+      priority: priority.value,
       description: description,
       startdate: startDate,
       enddate: dueDate,
@@ -552,21 +554,71 @@ const Example = () => {
       redirect: "follow",
     };
     console.log(jobid);
-    fetch("http://127.0.0.1:7550/workflow/jobs/job/" + jobid, requestOptions)
+    fetch(`${JOBS_API}/workflow/jobs/job/` + jobid, requestOptions)
       .then((response) => {
         if (!response.ok) {
           throw new Error("Network response was not ok");
         }
-        return response.text();
+        return response.json();
       })
       .then((result) => {
         // Handle success
-        toast.success("Job Template created successfully");
+        toast.success("Job Template updated successfully");
+        // setIsDrawerOpen(false);
+        fetchData();
       })
       .catch((error) => {
         // Handle errors
         console.error(error);
-        toast.error("Failed to create Job Template");
+        toast.error("Failed to update Job Template");
+      });
+  };
+  const handleSaveExitClick = () => {
+    updatejobdata();
+  };
+  const handleFormClose = () => {
+    setIsDrawerOpen(false);
+  };
+  const updatejobdata = () => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      pipeline: selectedPipeline.value,
+      stageid: selectedstage.value,
+      jobassignees: combinedValues,
+      priority: priority.value,
+      description: description,
+      startdate: startDate,
+      enddate: dueDate,
+    });
+
+    console.log(raw);
+    // /job
+    const requestOptions = {
+      method: "PATCH",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+    console.log(jobid);
+    fetch(`${JOBS_API}/workflow/jobs/job/` + jobid, requestOptions)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error("Network response was not ok");
+        }
+        return response.json();
+      })
+      .then((result) => {
+        // Handle success
+        toast.success("Job Template updated successfully");
+        setIsDrawerOpen(false);
+        fetchData();
+      })
+      .catch((error) => {
+        // Handle errors
+        console.error(error);
+        toast.error("Failed to update Job Template");
       });
   };
   return (
@@ -745,9 +797,15 @@ const Example = () => {
               <Editor initialContent={description} onChange={handleEditorChange} />
             </Box>
 
-            <Box>
+            <Box mt={3}>
               <Button variant="contained" onClick={handleSaveExitClick}>
                 Save & Exit
+              </Button>
+              <Button variant="contained" onClick={handleSaveClick}>
+                Save
+              </Button>
+              <Button variant="outlined" onClick={handleFormClose}>
+                Cancel
               </Button>
             </Box>
           </Box>

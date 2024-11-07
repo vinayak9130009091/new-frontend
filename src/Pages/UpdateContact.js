@@ -66,14 +66,33 @@ const ContactForm = ({ onContactUpdated, selectedContact, handleClose, isSmallSc
       //   }))
       // );
       // Flatten phoneNumbers array
-      const flatPhoneNumbers = selectedContact.phoneNumbers?.flat() || [];
+      // const flatPhoneNumbers = selectedContact.phoneNumbers?.flat() || [];
+      // setPhoneNumbers(
+      //   flatPhoneNumbers.map((phone) => ({
+      //     id: Date.now() + Math.random(), // Improved unique ID generation
+      //     phone,
+      //     isPrimary: false, // Set based on your logic
+      //   }))
+      // );
+
+      // const flatPhoneNumbers = selectedContact.phoneNumbers?.flat() || [];
+      // setPhoneNumbers(
+      //   flatPhoneNumbers.map((phone) => ({
+      //     id: Date.now() + Math.random(), // Improved unique ID generation
+      //     phone: String(phone), // Ensure phone is a string
+      //     isPrimary: false, // Set based on your logic
+      //   }))
+      // );
+
+      const flatPhoneNumbers = selectedContact.phoneNumbers?.flat(2) || []; // Flatten to ensure no nested arrays
       setPhoneNumbers(
-        flatPhoneNumbers.map((phone) => ({
+        flatPhoneNumbers.map((phoneObj) => ({
           id: Date.now() + Math.random(), // Improved unique ID generation
-          phone,
+          phone: String(phoneObj.phone), // Access the phone property correctly
           isPrimary: false, // Set based on your logic
         }))
       );
+
       const flatTags = selectedContact.tags?.[0] || [];
       setTagsNew(
         flatTags.map((tag) => ({

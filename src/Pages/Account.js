@@ -1,645 +1,26 @@
-// import { useMemo, useEffect, useState } from "react";
-// import { MaterialReactTable, useMaterialReactTable } from "material-react-table";
-
-// import axios from "axios";
-// import Badge from "@mui/material/Badge";
-// import Tooltip from "@mui/material/Tooltip";
-// import "./account.css";
-
-// import { Paper, useMediaQuery, IconButton } from "@mui/material";
-// import { MRT_TableHeadCellFilterContainer } from "material-react-table";
-// import { Chip, Stack, Select, MenuItem } from "@mui/material";
-
-// import DeleteIcon from "@mui/icons-material/Delete";
-
-// import Autocomplete from "@mui/lab/Autocomplete";
-// import TextField from "@mui/material/TextField";
-// import Box from "@mui/material/Box";
-
-// import { Link } from "react-router-dom";
-// const Example = () => {
-//   const ACCOUNT_API = process.env.REACT_APP_ACCOUNTS_URL;
-//   const TAGS_API = process.env.REACT_APP_TAGS_TEMP_URL;
-//   const renderFilterContainers = () => {
-//     return selectedFilters.map((selectedFilterIndex) => {
-//       const header = table.getLeafHeaders()[selectedFilterIndex + 1];
-//       return (
-//         <div className="MRT_TableHeadCellFilterContainer">
-//           <MRT_TableHeadCellFilterContainer key={header.id} header={header} table={table} in />
-//           <IconButton
-//             aria-label="delete"
-//             size="small"
-//             onClick={() => {
-//               setSelectedFilters((prevFilters) => prevFilters.filter((item) => item !== selectedFilterIndex));
-//             }}
-//           >
-//             <DeleteIcon fontSize="small" />
-//           </IconButton>
-//         </div>
-//       );
-//     });
-//   };
-//   const [selectedFilterIndex, setSelectedFilterIndex] = useState(null);
-
-//   const TeamMemberFilter = ({ column }) => {
-//     const columnFilterValue = column.getFilterValue();
-
-//     const uniqueTeamMembers = useMemo(() => {
-//       const teamMembers = new Set();
-//       column.getFacetedRowModel().rows.forEach((row) => {
-//         const members = row.getValue(column.id);
-//         if (Array.isArray(members)) {
-//           members.forEach((member) => {
-//             if (typeof member === "string") {
-//               teamMembers.add(member);
-//             } else if (member && member.username) {
-//               teamMembers.add(member.username);
-//             }
-//           });
-//         }
-//       });
-//       return Array.from(teamMembers);
-//     }, [column]);
-
-//     return (
-//       <Box>
-//         <Autocomplete
-//           size="small"
-//           options={uniqueTeamMembers}
-//           value={columnFilterValue || ""}
-//           onChange={(event, newValue) => {
-//             column.setFilterValue(newValue || undefined);
-//           }}
-//           renderInput={(params) => <TextField {...params} placeholder="Filter by Team Member" />}
-//         />
-//       </Box>
-//     );
-//   };
-
-//   const teamMemberFilterFn = (row, columnId, filterValue) => {
-//     const teamMembers = row.original.Team || [];
-//     return teamMembers.some((teamMember) => teamMember.username.toLowerCase().includes(filterValue.toLowerCase()));
-//   };
-
-//   const TypeFilter = ({ column }) => {
-//     const handleChange = (event) => {
-//       column.setFilterValue(event.target.value || undefined); // Set the filter value based on the selection
-//     };
-
-//     return (
-//       <Box>
-//         <Select
-//           size="small"
-//           value={column.getFilterValue() || ""}
-//           onChange={handleChange}
-//           displayEmpty
-//           renderInput={(params) => <TextField {...params} label="Filter by type" />}
-//           sx={{
-//             width: "150px",
-//           }}
-//         >
-//           <MenuItem value="">None</MenuItem>
-//           <MenuItem value="individual">Individual</MenuItem>
-//           <MenuItem value="company">Company</MenuItem>
-//         </Select>
-//       </Box>
-//     );
-//   };
-
-//   const typeFilterFn = (row, columnId, filterValue) => {
-//     const type = row.original.Type;
-//     return type ? type.toLowerCase() === filterValue.toLowerCase() : false;
-//   };
-
-//   useEffect(() => {
-//     console.log(selectedFilterIndex);
-//   }, [selectedFilterIndex]);
-
-//   const [selectedFilters, setSelectedFilters] = useState([]);
-//   const handleFilterChange = (event) => {
-//     const selectedIndex = event.target.value; // Assuming event.target.value is an index
-//     setSelectedFilterIndex(event.target.value);
-//     if (selectedIndex === null) {
-//       setSelectedFilterIndex(null); // Resetting selected filter index
-//       setSelectedFilters([]); // Resetting all selected filters
-//     } else {
-//       setSelectedFilters((prevFilters) => {
-//         const index = prevFilters.indexOf(selectedIndex);
-//         if (index === -1) {
-//           return [...prevFilters, selectedIndex]; // Append the selected index if not already present
-//         } else {
-//           return prevFilters.filter((item) => item !== selectedIndex); // Remove the index if already present
-//         }
-//       });
-//     }
-//     console.log(selectedFilters);
-//   };
-
-//   const [accountData, setAccountData] = useState([]);
-//   const isMobile = useMediaQuery("(max-width: 1000px)");
-
-//   const UserInitials = ({ username }) => {
-//     // Check if username is a string and provide a default if not
-//     const validUsername = typeof username === "string" ? username : "";
-
-//     return (
-//       <span title={validUsername}>
-//         {validUsername
-//           .split(" ")
-//           .map((word) => word.charAt(0).toUpperCase()) // Convert to uppercase
-//           .join("")}
-//       </span>
-//     );
-//   };
-
-//   useEffect(() => {
-//     const fetchData = async () => {
-//       try {
-//         const config = {
-//           method: "get",
-//           maxBodyLength: Infinity,
-//           url: `${ACCOUNT_API}/accounts/account/accountdetailslist/`,
-//           headers: {},
-//         };
-//         const response = await axios.request(config);
-//         setAccountData(response.data.accountlist);
-//       } catch (error) {
-//         console.log("Error:", error);
-//       }
-//     };
-//     fetchData();
-//   }, []);
-
-//   //Tag FetchData ================
-// const [tags, setTags] = useState([]);
-// useEffect(() => {
-//   fetchTagData();
-// }, []);
-
-// const fetchTagData = async () => {
-//   try {
-//     const url = `${TAGS_API}/tags/`;
-
-//     const response = await fetch(url);
-//     const data = await response.json();
-//     setTags(data.tags);
-//     console.log(data.tags);
-//   } catch (error) {
-//     console.error("Error fetching data:", error);
-//   }
-// };
-// //  for tags
-// const calculateWidth = (tagName) => {
-//   const baseWidth = 10; // base width for each tag
-//   const charWidth = 8; // approximate width of each character
-//   const padding = 10; // padding on either side
-//   return baseWidth + charWidth * tagName.length + padding;
-// };
-
-// const tagsOptions = tags.map((tag) => ({
-//   value: tag._id,
-//   label: tag.tagName,
-//   colour: tag.tagColour,
-
-//   customStyle: {
-//     backgroundColor: tag.tagColour,
-//     color: "#fff",
-//     borderRadius: "8px",
-//     alignItems: "center",
-//     textAlign: "center",
-//     marginBottom: "5px",
-//     padding: "2px,8px",
-//     fontSize: "10px",
-//     width: `${calculateWidth(tag.tagName)}px`,
-//     margin: "7px",
-//   },
-//   customTagStyle: {
-//     backgroundColor: tag.tagColour,
-//     color: "#fff",
-//     alignItems: "center",
-//     textAlign: "center",
-//     padding: "2px,8px",
-//     fontSize: "10px",
-//     borderRadius: "8px",
-//     width: `${calculateWidth(tag.tagName)}px`,
-//     cursor: "pointer",
-//     margin: "7px",
-//   },
-//   customInputTagStyle: {
-//     backgroundColor: tag.tagColour,
-//     color: "#fff",
-//     alignItems: "center",
-//     textAlign: "center",
-//     padding: "2px,8px",
-//     fontSize: "10px",
-//     cursor: "pointer",
-//     margin: "7px",
-//   },
-// }));
-
-//   const TagFilter = ({ column }) => {
-//     const columnFilterValue = column.getFilterValue() || [];
-
-//     return (
-//       <Box sx={{ marginBottom: 2 }}>
-//         <Autocomplete
-//           multiple
-//           options={tagsOptions}
-//           value={columnFilterValue}
-//           onChange={(event, newValue) => {
-//             column.setFilterValue(newValue);
-//           }}
-//           getOptionLabel={(option) => option.label}
-//           isOptionEqualToValue={(option, value) => option.value === value.value}
-//           renderInput={(params) => <TextField {...params} label="Filter by Tags" variant="outlined" />}
-//           renderTags={(selected, getTagProps) => selected.map((option, index) => <Chip key={option.value} label={option.label} style={option.customInputTagStyle} {...getTagProps({ index })} />)}
-//           renderOption={(props, option) => (
-//             <li {...props} style={option.customTagStyle}>
-//               {option.label}
-//             </li>
-//           )}
-//         />
-//       </Box>
-//     );
-//   };
-
-//   const tagFilterFn = (row, columnId, filterValue) => {
-//     const tags = row.original.Tags || [];
-//     // Check if any of the row tags match any of the filter tags
-//     return filterValue.length === 0 || filterValue.some((filterTag) => tags.some((tag) => tag._id === filterTag.value));
-//   };
-
-//   const columns = useMemo(
-//     //column definitions...
-//     () => [
-//       {
-//         accessorKey: "Name",
-//         header: "AccountName",
-
-//         Cell: ({ cell }) => (
-//           <Link to={`/accountsdash/overview/${cell.row.original.id}`} style={{ textDecoration: "none", color: "blue" }}>
-//             {cell.getValue()}
-//           </Link>
-//         ),
-//       },
-//       {
-//         accessorKey: "Follow",
-//         header: "Follow",
-//       },
-//       {
-//         accessorKey: "Type",
-//         header: "Type",
-//         size: 200,
-//         filterFn: typeFilterFn, // Use the custom filter function
-//         // Filter: TypeFilter,
-//         Filter: ({ column, table }) => <TypeFilter column={column} table={table} />,
-//         Cell: ({ cell }) => (
-//           <div style={{ display: "flex", marginLeft: "20px", gap: "0px" }}>
-//             <Badge
-//               badgeContent={cell.getValue()}
-//               color="primary"
-//               sx={{
-//                 display: "flex",
-//                 justifyContent: "center",
-//                 alignItems: "center",
-//               }}
-//             />
-//           </div>
-//         ),
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Team",
-//         header: "Team Members",
-//         filterFn: teamMemberFilterFn,
-//         Filter: ({ column, table }) => <TeamMemberFilter column={column} table={table} />,
-//         Cell: ({ cell }) => {
-//           const teamMembers = Array.isArray(cell.getValue()) ? cell.getValue() : [];
-
-//           if (teamMembers.length === 0) return null;
-
-//           return (
-//             <div style={{ display: "flex", flexWrap: "wrap", maxWidth: "100%", gap: "15px" }}>
-//               {teamMembers.map((teamMember, index) => (
-//                 <Tooltip key={index} title={teamMember.username}>
-//                   <Badge
-//                     badgeContent={<UserInitials username={teamMember.username} />}
-//                     color="primary"
-//                     sx={{
-//                       "& .MuiBadge-badge": {
-//                         backgroundColor: "#F4D03F",
-//                         color: "white",
-//                       },
-//                       marginRight: "8px",
-//                       marginBottom: "8px",
-//                       cursor: "pointer",
-//                     }}
-//                   />
-//                 </Tooltip>
-//               ))}
-//             </div>
-//           );
-//         },
-//       },
-
-//       {
-//         accessorKey: "Tags",
-//         header: "Tags",
-// filterFn: tagFilterFn, // Use the custom tag filter function
-// Filter: ({ column, table }) => <TagFilter column={column} table={table} />,
-
-//         // Cell: ({ cell }) => {
-//         //   const tags = cell.getValue()[0];
-//         //   if (tags.length > 1) {
-//         //     const firstTag = tags[0];
-//         //     const remainingTagsCount = tags.length - 1;
-//         //     return (
-//         //       <Tooltip
-//         //         placement="top"
-//         //         arrow
-//         //         title={tags.map(tag => (
-//         //           <div key={tag._id}>
-//         //             <span style={{
-//         //               backgroundColor: tag.tagColour,
-//         //               color: "#fff",
-//         //               borderRadius: "60px",
-//         //               padding: "0.1rem 0.8rem",
-//         //               fontSize: "10px",
-//         //               display: 'inline-block',
-//         //               margin: '2px'
-//         //             }}>
-//         //               {tag.tagName}
-//         //             </span>
-//         //           </div>
-//         //         ))}
-//         //       >
-//         //         <Box>
-//         //           <span style={{
-//         //             backgroundColor: firstTag.tagColour,
-//         //             color: "#fff",
-//         //             borderRadius: "60px",
-//         //             padding: "0.1rem 0.8rem",
-//         //             fontSize: "10px",
-//         //             display: 'inline-block',
-//         //             margin: '2px',
-//         //             cursor: 'pointer'
-//         //           }}>
-//         //             {firstTag.tagName}
-//         //           </span>
-//         //           {remainingTagsCount > 0 && (
-//         //             <Badge
-//         //               badgeContent={`+${remainingTagsCount}`}
-//         //               color="#7D7C7C"
-//         //               overlap="rectangular"
-//         //               anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-//         //               sx={{ ml: 1 }}
-//         //             />
-//         //           )}
-//         //         </Box>
-//         //       </Tooltip>
-//         //     );
-//         //   }
-//         //   return (
-//         //     <span style={{
-//         //       backgroundColor: tags.tagColour,
-//         //       color: "#fff",
-//         //       borderRadius: "60px",
-//         //       padding: "0.1rem 0.8rem",
-//         //       fontSize: "10px",
-//         //       display: 'inline-block',
-//         //       margin: '2px'
-//         //     }}>
-//         //       {tags.tagName}
-//         //     </span>
-//         //   );
-//         // },
-
-//         Cell: ({ cell }) => {
-//           const tags = cell.getValue();
-
-//           // Check if tags is an array and has at least one item
-//           if (Array.isArray(tags) && tags.length > 0) {
-//             if (tags.length > 1) {
-//               const firstTag = tags[0];
-//               const remainingTagsCount = tags.length - 1;
-//               return (
-//                 <Tooltip
-//                   placement="top"
-//                   arrow
-//                   title={tags.map((tag) => (
-//                     <div key={tag._id}>
-//                       <span
-//                         style={{
-//                           backgroundColor: tag.tagColour,
-//                           color: "#fff",
-//                           borderRadius: "60px",
-//                           padding: "0.1rem 0.8rem",
-//                           fontSize: "10px",
-//                           display: "inline-block",
-//                           margin: "2px",
-//                         }}
-//                       >
-//                         {tag.tagName}
-//                       </span>
-//                     </div>
-//                   ))}
-//                 >
-//                   <Box>
-//                     <span
-//                       style={{
-//                         backgroundColor: firstTag.tagColour,
-//                         color: "#fff",
-//                         borderRadius: "60px",
-//                         padding: "0.1rem 0.8rem",
-//                         fontSize: "10px",
-//                         display: "inline-block",
-//                         margin: "2px",
-//                         cursor: "pointer",
-//                       }}
-//                     >
-//                       {firstTag.tagName}
-//                     </span>
-//                     {remainingTagsCount > 0 && <Badge badgeContent={`+${remainingTagsCount}`} color="#7D7C7C" overlap="rectangular" anchorOrigin={{ vertical: "top", horizontal: "right" }} sx={{ ml: 1 }} />}
-//                   </Box>
-//                 </Tooltip>
-//               );
-//             }
-//             // If there's only one tag, render it directly
-//             return (
-//               <span
-//                 style={{
-//                   backgroundColor: tags[0].tagColour,
-//                   color: "#fff",
-//                   borderRadius: "60px",
-//                   padding: "0.1rem 0.8rem",
-//                   fontSize: "10px",
-//                   display: "inline-block",
-//                   margin: "2px",
-//                 }}
-//               >
-//                 {tags[0].tagName}
-//               </span>
-//             );
-//           }
-
-//           // If tags is not an array or is empty, you may want to return something else
-//           return <span>No Tags</span>; // Or handle it however you'd like
-//         },
-//       },
-//       {
-//         accessorKey: "Invoices",
-//         header: "Invoices",
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Credits",
-//         header: "Credits",
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Tasks",
-//         header: "Tasks",
-//         // footer: "City",
-//       },
-
-//       {
-//         accessorKey: "Proposals",
-//         header: "Proposals",
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Unreadchats",
-//         header: "Unreadchats",
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Pendingorganizers",
-//         header: "PendingOrganizers",
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Pendingsignatures",
-//         header: "PendingSignatures",
-//         // footer: "City",
-//       },
-//       {
-//         accessorKey: "Lastlogin",
-//         header: "LastLogin",
-//         // footer: "City",
-//         filterVariant: "range",
-//       },
-//     ],
-//     [tagsOptions]
-//     //end
-//   );
-
-//   const table = useMaterialReactTable({
-//     columns,
-//     data: accountData,
-//     enableBottomToolbar: true,
-//     enableStickyHeader: true,
-//     columnFilterDisplayMode: "custom", //we will render our own filtering UI
-//     enableRowSelection: true, // Enable row selection
-//     enablePagination: true,
-//     muiTableContainerProps: { sx: { maxHeight: "400px" } },
-//     initialState: {
-//       columnPinning: { left: ["mrt-row-select", "Name"] },
-//     },
-
-//     muiTableBodyCellProps: {
-//       sx: (theme) => ({
-//         backgroundColor: theme.palette.mode === "dark" ? theme.palette.grey[900] : theme.palette.grey[50],
-//       }),
-//     },
-//   });
-
-//   return (
-//     <Stack direction={isMobile ? "column-reverse" : "column"} gap="8px">
-//       <Paper style={{ display: "flex", overflowX: "auto" }}>
-//         <Stack p="8px" gap="8px" display="flex" direction="row">
-//           <>
-//             {/* <Select
-//               value={selectedFilterIndex}
-//               onChange={handleFilterChange}
-//               size='small'
-//               sx={{
-//                 backgroundColor: 'white',
-//                 minWidth: 200, // Minimum width for the select box
-
-//               }}
-//             >
-//               <MenuItem value={null}>None</MenuItem>
-//               {columns.map((column, index) => (
-//                 <MenuItem key={index} value={index}>
-//                   {column.header}
-//                 </MenuItem>
-//               ))}
-//             </Select> */}
-
-//             <Autocomplete
-//               options={columns.map((column, index) => ({
-//                 label: column.header, // Display header text
-//                 value: index, // Store the index as the value
-//               }))}
-//               value={columns[selectedFilterIndex] ? { label: columns[selectedFilterIndex].header, value: selectedFilterIndex } : null}
-//               onChange={(event, newValue) => {
-//                 if (newValue) {
-//                   setSelectedFilterIndex(newValue.value);
-//                   handleFilterChange({ target: { value: newValue.value } });
-//                 } else {
-//                   setSelectedFilterIndex(null);
-//                   handleFilterChange({ target: { value: null } });
-//                 }
-//               }}
-//               getOptionLabel={(option) => option.label || ""}
-//               isOptionEqualToValue={(option, value) => option.value === value?.value}
-//               renderInput={(params) => (
-//                 <TextField
-//                   {...params}
-//                   placeholder="Select Filter"
-//                   variant="outlined"
-//                   size="small"
-//                   sx={{
-//                     backgroundColor: "white",
-//                     minWidth: 200, // Match the minimum width of the original Select
-//                   }}
-//                 />
-//               )}
-//               renderOption={(props, option) => (
-//                 <li
-//                   {...props}
-//                   style={{
-//                     fontSize: "14px",
-//                     padding: "5px", // Padding for each option
-//                     // Spacing between options
-//                     cursor: "pointer",
-//                   }}
-//                 >
-//                   {option.label}
-//                 </li>
-//               )}
-//             />
-
-//             <Stack direction="row" gap="8px">
-//               {renderFilterContainers()}
-//             </Stack>
-//           </>
-//         </Stack>
-//       </Paper>
-//       <MaterialReactTable columns={columns} table={table} />
-//     </Stack>
-//   );
-// };
-
-// export default Example;
-
 import React, { useEffect, useState } from "react";
-import { TablePagination, Chip, Tooltip, Autocomplete, OutlinedInput, MenuItem as MuiMenuItem, FormControl, InputLabel, Menu, Button, IconButton, Select, MenuItem, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Paper } from "@mui/material";
+import { Drawer, TablePagination, Chip, Tooltip, Autocomplete, Box, Divider, Typography, OutlinedInput, MenuItem as MuiMenuItem, FormControl, InputLabel, Menu, Button, IconButton, Select, MenuItem, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Paper } from "@mui/material";
 import axios from "axios";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { RxCross2 } from "react-icons/rx";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import { Outlet } from "react-router-dom";
+import ListIcon from "@mui/icons-material/List";
+import EmailIcon from "@mui/icons-material/Email";
+import TagIcon from "@mui/icons-material/Tag";
+import PersonIcon from "@mui/icons-material/Person";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
+import SendAccountEmail from "./BulkActions/SendAccountEmail";
+import AddJobs from "./BulkActions/AddJobs";
+import AddBulkOrganizer from "./BulkActions/AddBulkOrganizer";
+import ManageTags from "./BulkActions/ManageTags";
+import ManageTeams from "./BulkActions/ManageTeams";
+import { useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
 const FixedColumnTable = () => {
+  const theme = useTheme();
+  const isSmallScreen = useMediaQuery(theme.breakpoints.down("sm"));
   const ACCOUNT_API = process.env.REACT_APP_ACCOUNTS_URL;
   const TAGS_API = process.env.REACT_APP_TAGS_TEMP_URL;
   const [accountData, setAccountData] = useState([]);
@@ -662,19 +43,22 @@ const FixedColumnTable = () => {
     tags: false,
   });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await axios.get(`${ACCOUNT_API}/accounts/account/accountdetailslist/`);
-        setAccountData(response.data.accountlist);
-        console.log(response.data.accountlist);
-      } catch (error) {
-        console.log("Error:", error);
-      }
-    };
+  const [isActiveTrue, setIsActiveTrue] = useState(true);
+  const [anchorE2, setAnchorE2] = useState(null);
 
+  const fetchData = async () => {
+    try {
+      const response = await axios.get(`${ACCOUNT_API}/accounts/account/accountdetailslist/${isActiveTrue}`);
+      setAccountData(response.data.accountlist);
+      console.log(response.data.accountlist);
+    } catch (error) {
+      console.log("Error:", error);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
-  }, [ACCOUNT_API]);
+  }, [ACCOUNT_API, isActiveTrue]);
 
   const handleSelect = (id) => {
     const currentIndex = selected.indexOf(id);
@@ -683,6 +67,8 @@ const FixedColumnTable = () => {
     // Log all selected row IDs
     console.log("Selected IDs:", newSelected); // Log all selected IDs
   };
+
+  console.log(selected);
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters((prevFilters) => ({ ...prevFilters, [name]: value })); // Update filter without clearing others
@@ -704,6 +90,7 @@ const FixedColumnTable = () => {
 
   const handleClose = () => {
     setAnchorEl(null);
+    setAnchorE2(null);
   };
 
   const clearFilter = (filterField) => {
@@ -775,20 +162,262 @@ const FixedColumnTable = () => {
     }
     return sorted;
   }, [filteredData, sortConfig]);
+
+  const [isSendEmailOpen, setIsSendEmailOpen] = useState(false);
+  const [isCreateJobOpen, setIsCreateJobOpen] = useState(false);
+  const [isCreateOrganizerOpen, setIsCreateOrganizerOpen] = useState(false);
+  const [isManageTagsOpen, setIsManageTagsOpen] = useState(false);
+  const [isManageTeamOpen, setIsManageTeamOpen] = useState(false);
+
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const handleDrawerOpen = () => {
+    setIsDrawerOpen(true);
+  };
+  const handleDrawerClose = () => {
+    setIsDrawerOpen(false);
+    setIsSendEmailOpen(false);
+    setIsCreateOrganizerOpen(false);
+    setIsCreateJobOpen(false);
+    setIsManageTagsOpen(false);
+    setIsManageTeamOpen(false);
+  };
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
   };
+
   const handleChangeRowsPerPage = (event) => {
     setRowsPerPage(parseInt(event.target.value, 10));
     setPage(0);
   };
   const paginatedData = sortedData.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage);
+
+  const handleAssignOrganizer = () => {
+    setIsCreateOrganizerOpen(!isCreateOrganizerOpen);
+    handleDrawerOpen();
+    console.log("Assign Organizer action triggered.");
+  };
+
+  const handleAddJob = () => {
+    setIsCreateJobOpen(!isCreateJobOpen);
+    handleDrawerOpen();
+    console.log("Add Job action triggered.");
+  };
+
+  const handleManageTeam = () => {
+    setIsManageTeamOpen(!isManageTeamOpen);
+    handleDrawerOpen();
+    console.log("Manage Team action triggered.");
+  };
+
+  const handleSendEmail = () => {
+    setIsSendEmailOpen(!isSendEmailOpen);
+    handleDrawerOpen();
+    console.log("Send Email action triggered.");
+  };
+
+  const handleManageTags = () => {
+    setIsManageTagsOpen(!isManageTagsOpen);
+    handleDrawerOpen();
+    console.log("Manage Tags action triggered.");
+  };
+
+  const handleFormClose = () => {
+    setIsDrawerOpen(false);
+    setIsSendEmailOpen(false);
+    setIsCreateOrganizerOpen(false);
+    setIsCreateJobOpen(false);
+    setIsManageTagsOpen(false);
+    setIsManageTeamOpen(false);
+  };
+
+  const [activeButton, setActiveButton] = useState("active");
+
+  const handleActiveClick = () => {
+    setIsActiveTrue(true);
+    setActiveButton("active");
+    fetchData();
+    console.log("Active action triggered.");
+  };
+
+  const handleArchivedClick = () => {
+    setIsActiveTrue(false);
+    setActiveButton("archived");
+    fetchData();
+    console.log("Archive action triggered.");
+  };
+
+  const handleMoreActionsClick = (event) => {
+    setAnchorE2(event.currentTarget);
+  };
+  // Define additional action handlers
+  const handleArchiveAccount = () => {
+    console.log("Additional Action 1 triggered");
+
+    selected.forEach((accountId) => {
+      handleSubmit(accountId);
+    });
+    toast.success("account updated successfully");
+    setIsActiveTrue(false);
+    handleClose();
+  };
+
+  const handleEditLoginNotifyEmailSync = () => {
+    console.log("EditLoginNotifyEmailSync triggered");
+    handleClose();
+  };
+
+  // create account
+  const handleSubmit = (selected) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const raw = JSON.stringify({
+      active: !isActiveTrue,
+    });
+    console.log(raw);
+    const requestOptions = {
+      method: "PATCH",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+    const url = `${ACCOUNT_API}/accounts/accountdetails/${selected}`;
+    fetch(url, requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+        console.log(result.updatedAccount); // Log the result
+        // setAccountId(result.updatedAccount._id);
+        // toast.success("Form submitted successfully"); // Display success toast
+      })
+      .catch((error) => {
+        console.error(error); // Log the error
+        toast.error("An error occurred while submitting the form"); // Display error toast
+      });
+  };
   return (
     <>
       <div style={{ display: "flex", padding: "10px", marginBottom: "20px" }}>
-        <Button variant="text" onClick={handleFilterButtonClick} style={{ marginRight: "10px" }}>
+        <Box className="client-document">
+          <Box
+            className="client-document-nav"
+            sx={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between", // Add this line
+              alignItems: "center", // Vertically align items
+              mt: 5,
+              width: "100%",
+              margin: "20px",
+              gap: "10px",
+              "& a": {
+                textDecoration: "none",
+                padding: "10px 16px",
+                borderRadius: "4px",
+                color: "primary.main",
+                "&:hover": {
+                  backgroundColor: "primary.light",
+                  color: "white",
+                },
+                "&.active": {
+                  backgroundColor: "primary.main",
+                  color: "white",
+                },
+              },
+            }}
+          >
+            <Box>
+              <Button
+                style={{
+                  backgroundColor: activeButton === "active" ? "blue" : "transparent",
+                  color: activeButton === "active" ? "white" : "black",
+                  fontWeight: activeButton === "active" ? "bold" : "normal",
+                }}
+                onClick={handleActiveClick}
+              >
+                Active
+              </Button>
+
+              <Button
+                style={{
+                  backgroundColor: activeButton === "archived" ? "blue" : "transparent",
+                  color: activeButton === "archived" ? "white" : "black",
+                  fontWeight: activeButton === "archived" ? "bold" : "normal",
+                }}
+                onClick={handleArchivedClick}
+              >
+                Archived
+              </Button>
+            </Box>
+          </Box>
+          <Divider sx={{ my: 2, margin: "20px" }} />
+          <Box sx={{ my: 2, margin: "20px" }}>
+            <Button variant="text" onClick={handleFilterButtonClick}>
+              Filter Options
+            </Button>
+          </Box>
+          <Outlet />
+                  
+        </Box>
+        {/* <Button variant="text" onClick={handleFilterButtonClick} style={{ marginRight: "10px" }}>
           Filter Options
-        </Button>
+        </Button> */}
+
+        {/* Render action panel when items are selected */}
+        {selected.length > 0 && (
+          <div
+            data-test="clients-bulk-actions-panel"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "12px",
+              padding: "10px",
+              marginBottom: "20px",
+              borderBottom: "1px solid #ddd",
+              backgroundColor: "#f5f5f5",
+            }}
+          >
+            <Button variant="text" startIcon={<ListIcon />} onClick={handleAssignOrganizer}>
+              Send Organizer
+            </Button>
+            <Button variant="text" startIcon={<ListIcon />} onClick={handleAddJob}>
+              Add Job
+            </Button>
+            <Button variant="text" startIcon={<PersonIcon />} onClick={handleManageTeam}>
+              Manage Team
+            </Button>
+            <Button variant="text" startIcon={<EmailIcon />} disabled={selected.length === 0} onClick={handleSendEmail}>
+              Send Email
+            </Button>
+            <Button variant="text" startIcon={<TagIcon />} onClick={handleManageTags}>
+              Manage Tags
+            </Button>
+            <Button variant="text" startIcon={<MoreVertIcon />} onClick={handleMoreActionsClick}>
+              More Actions
+            </Button>
+
+            {/* Dropdown menu for additional actions */}
+            <Menu
+              anchorEl={anchorE2}
+              open={Boolean(anchorE2)}
+              onClose={handleClose}
+              anchorOrigin={{
+                vertical: "bottom",
+                horizontal: "left",
+              }}
+              transformOrigin={{
+                vertical: "top",
+                horizontal: "left",
+              }}
+            >
+              <MenuItem onClick={handleArchiveAccount}> {isActiveTrue ? "Archive Account" : "Activate Account"}</MenuItem>
+              <MenuItem onClick={handleEditLoginNotifyEmailSync}>Edit login notify emailSync</MenuItem>
+              {/* <MenuItem onClick={handleAction3}>Additional Action 3</MenuItem>  */}
+                       
+            </Menu>
+          </div>
+        )}
+
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
           <MenuItem
             onClick={() => {
@@ -999,80 +628,7 @@ const FixedColumnTable = () => {
                       );
                     })}
                   </TableCell>
-                  {/* <TableCell>
-                    {row.Tags &&
-                      row.Tags.map((tag) => (
-                        <span
-                          key={tag.tagName}
-                          style={{
-                            backgroundColor: tag.tagColour,
-                            color: "#fff",
-                            padding: "2px 8px",
-                            borderRadius: "8px",
-                            marginRight: "5px",
-                            fontSize: "12px",
-                          }}
-                        >
-                          {tag.tagName}
-                        </span>
-                      ))}
-                  </TableCell> */}
-                  {/* <TableCell>
-                    {row.Tags.length > 1 ? (
-                      <Tooltip
-                        title={
-                          <div>
-                            {row.Tags.map((tag) => (
-                              <div
-                                key={tag._id}
-                                style={{
-                                  background: tag.tagColour,
-                                  color: "#fff",
-                                  borderRadius: "8px",
-                                  padding: "2px 8px",
-                                  marginBottom: "2px",
-                                  fontSize: "10px",
-                                }}
-                              >
-                                {tag.tagName}
-                              </div>
-                            ))}
-                          </div>
-                        }
-                        placement="top"
-                      >
-                        <span
-                          style={{
-                            background: row.Tags[0].tagColour, // Show color of the first tag
-                            color: "#fff",
-                            borderRadius: "8px",
-                            padding: "2px 8px",
-                            fontSize: "10px",
-                            cursor: "pointer",
-                          }}
-                        >
-                          {row.Tags[0].tagName}
-                        </span>
-                      </Tooltip>
-                    ) : (
-                      row.Tags.map((tag) => (
-                        <span
-                          key={tag._id}
-                          style={{
-                            background: tag.tagColour,
-                            color: "#fff",
-                            borderRadius: "8px",
-                            padding: "2px 8px",
-                            fontSize: "10px",
-                            marginLeft: "3px",
-                          }}
-                        >
-                          {tag.tagName}
-                        </span>
-                      ))
-                    )}
-                    {row.Tags.length > 1 && <span style={{ marginLeft: "5px", fontSize: "10px", color: "#555" }}>+{row.Tags.length - 1}</span>}
-                  </TableCell> */}
+
                   <TableCell>
                     {Array.isArray(row.Tags) && row.Tags.length > 0 ? (
                       row.Tags.length > 1 ? (
@@ -1147,67 +703,119 @@ const FixedColumnTable = () => {
         </Table>
       </TableContainer>
       <TablePagination rowsPerPageOptions={[5, 10, 15]} component="div" count={sortedData.length} rowsPerPage={rowsPerPage} page={page} onPageChange={handleChangePage} onRowsPerPageChange={handleChangeRowsPerPage} />
+
+      <Drawer
+        anchor="right"
+        open={isDrawerOpen}
+        onClose={handleDrawerClose}
+        PaperProps={{
+          id: "tag-drawer",
+          sx: {
+            borderRadius: isSmallScreen ? "0" : "10px 0 0 10px",
+            width: isSmallScreen ? "100%" : 700,
+            maxWidth: "100%",
+            [theme.breakpoints.down("sm")]: {
+              width: "100%",
+            },
+          },
+        }}
+      >
+        <Box sx={{ borderRadius: isSmallScreen ? "0" : "15px" }} role="presentation">
+          {isSendEmailOpen && (
+            <Box p={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">New Email</Typography>
+                <IconButton onClick={handleFormClose} sx={{ color: "blue" }}>
+                  <RxCross2 fontSize="large" />
+                </IconButton>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <SendAccountEmail selectedAccounts={selected} onClose={handleFormClose} />
+            </Box>
+          )}
+
+          {isCreateJobOpen && (
+            <Box p={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">Create job</Typography>
+                <IconButton onClick={handleFormClose} sx={{ color: "blue" }}>
+                  <RxCross2 fontSize="large" />
+                </IconButton>
+              </Box>
+
+              <AddJobs selectedAccounts={selected} onClose={handleFormClose} />
+            </Box>
+          )}
+
+          {isCreateOrganizerOpen && (
+            <Box p={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">Create Organizer</Typography>
+                <IconButton onClick={handleFormClose} sx={{ color: "blue" }}>
+                  <RxCross2 fontSize="large" />
+                </IconButton>
+              </Box>
+
+              <AddBulkOrganizer selectedAccounts={selected} onClose={handleFormClose} />
+            </Box>
+          )}
+
+          {isManageTagsOpen && (
+            <Box p={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">Assign Tags for </Typography>
+
+                <Typography variant="body1" sx={{ marginRight: 2 }}>
+                  {selected
+                    .map((id) => {
+                      const account = accountData.find((account) => account.id === id);
+                      return account ? account.Name : id; // Fallback to ID if name is not found
+                    })
+                    .join(", ")}{" "}
+                  {/* Joining account names with commas */}
+                </Typography>
+
+                <IconButton onClick={handleFormClose} sx={{ color: "blue" }}>
+                  <RxCross2 fontSize="large" />
+                </IconButton>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <ManageTags selectedAccounts={selected} onClose={handleFormClose} />
+            </Box>
+          )}
+
+          {isManageTeamOpen && (
+            <Box p={2}>
+              <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Typography variant="h6">Assign Team for</Typography>
+
+                <Typography variant="body1" sx={{ marginRight: 2 }}>
+                  {selected
+                    .map((id) => {
+                      const account = accountData.find((account) => account.id === id);
+                      return account ? account.Name : id; // Fallback to ID if name is not found
+                    })
+                    .join(", ")}{" "}
+                  {/* Joining account names with commas */}
+                </Typography>
+                <IconButton onClick={handleFormClose} sx={{ color: "blue" }}>
+                  <RxCross2 fontSize="large" />
+                </IconButton>
+              </Box>
+
+              <Divider sx={{ my: 2 }} />
+
+              <ManageTeams selectedAccounts={selected} onClose={handleFormClose} />
+            </Box>
+          )}
+        </Box>
+      </Drawer>
     </>
   );
 };
 
 export default FixedColumnTable;
-
-{
-  /* <TableCell>
-{row.tags.length > 1 ? (
-  <Tooltip
-    title={
-      <div>
-        {row.tags.map((tag) => (
-          <div
-            key={tag._id}
-            style={{
-              background: tag.tagColour,
-              color: "#fff",
-              borderRadius: "8px",
-              padding: "2px 8px",
-              marginBottom: "2px",
-              fontSize: "10px",
-            }}
-          >
-            {tag.tagName}
-          </div>
-        ))}
-      </div>
-    }
-    placement="top"
-  >
-    <span
-      style={{
-        background: row.tags[0].tagColour, // Show color of the first tag
-        color: "#fff",
-        borderRadius: "8px",
-        padding: "2px 8px",
-        fontSize: "10px",
-        cursor: "pointer",
-      }}
-    >
-      {row.tags[0].tagName}
-    </span>
-  </Tooltip>
-) : (
-  row.tags.map((tag) => (
-    <span
-      key={tag._id}
-      style={{
-        background: tag.tagColour,
-        color: "#fff",
-        borderRadius: "8px",
-        padding: "2px 8px",
-        fontSize: "10px",
-        marginLeft: "3px",
-      }}
-    >
-      {tag.tagName}
-    </span>
-  ))
-)}
-{row.tags.length > 1 && <span style={{ marginLeft: "5px", fontSize: "10px", color: "#555" }}>+{row.tags.length - 1}</span>}
-</TableCell> */
-}
