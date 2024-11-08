@@ -451,9 +451,9 @@ const Info = () => {
                     multiple // Enable multiple selections
                     options={filteredContacts}
                     getOptionLabel={(option) => option.name} // Specify how to display the option
-                    onInputChange={(event, newValue) => {
-                      setSearchQuery(newValue);
-                    }}
+                    // onInputChange={(event, newValue) => {
+                    //   setSearchQuery(newValue);
+                    // }}
                     onChange={(event, newValue) => {
                       // Update selected contacts with only IDs
                       const ids = newValue.map((contact) => contact.id); // Extract IDs from selected contacts

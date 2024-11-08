@@ -145,6 +145,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
         const data = await response.json();
         const template = data.jobTemplate;
 
+        console.log(data.jobTemplate);
         // Populate the form fields with template data
         setJobName(template.jobname);
 
@@ -166,6 +167,18 @@ const CreateJob = ({ charLimit = 4000 }) => {
         setduein(template.duein); // You might need to adjust this
         setStartsInDuration(template.startsinduration);
         setdueinduration(template.dueinduration);
+        setClientFacingStatus(template.showinclientportal);
+        setInputText(template.jobnameforclient);
+        if (template.clientfacingstatus && template.clientfacingstatus) {
+          const clientStatusData = {
+            value: template.clientfacingstatus._id,
+            label: template.clientfacingstatus.clientfacingName,
+            clientfacingColour: template.clientfacingstatus.clientfacingColour,
+          };
+
+          setSelectedJob(clientStatusData);
+        }
+        setClientDescription(template.clientfacingDescription);
       } catch (error) {
         console.error("Error fetching template data:", error);
       }
@@ -236,7 +249,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
       startsinduration: startsInDuration,
       duein: duein,
       dueinduration: dueinduration,
-      comments: comments,
+      // comments: comments,
       showinclientportal: clientFacingStatus,
       jobnameforclient: inputText,
       clientfacingstatus: selectedJob?.value,
@@ -268,21 +281,6 @@ const CreateJob = ({ charLimit = 4000 }) => {
       });
   };
 
-  const [comments, setComments] = useState([]);
-
-  const addCommentField = () => {
-    setComments([...comments, ""]); // Add a new empty comment field
-  };
-  console.log(comments);
-  const handleCommentChange = (index, value) => {
-    const updatedComments = [...comments];
-    updatedComments[index] = value; // Update the specific comment field
-    setComments(updatedComments);
-  };
-  const deleteCommentField = (index) => {
-    const updatedComments = comments.filter((_, i) => i !== index); // Remove the comment at the specified index
-    setComments(updatedComments);
-  };
   const [shortcuts, setShortcuts] = useState([]);
   const [filteredShortcuts, setFilteredShortcuts] = useState([]);
   const [selectedOption, setSelectedOption] = useState("contacts");
@@ -481,7 +479,6 @@ const CreateJob = ({ charLimit = 4000 }) => {
               <Typography variant="h5" gutterBottom>
                 Add Jobs
               </Typography>
-              <Button onClick={addCommentField}>Add comments</Button>
             </Box>
 
             <Box mb={2}>
@@ -703,16 +700,6 @@ const CreateJob = ({ charLimit = 4000 }) => {
               </Grid>
               <Grid item xs={12} sm={5} ml={{ xs: 0, sm: 3 }} className="right-side-container" mt={2}>
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
-                  <Box>
-                    {comments.map((comment, index) => (
-                      <div key={index} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                        <TextField value={comment} onChange={(e) => handleCommentChange(index, e.target.value)} placeholder={`Comment ${index + 1}`} variant="outlined" fullWidth multiline margin="normal" />
-                        <IconButton onClick={() => deleteCommentField(index)}>
-                          <DeleteIcon />
-                        </IconButton>
-                      </div>
-                    ))}
-                  </Box>
                   <Box mt={2}>
                     <Box style={{ display: "flex", alignItems: "center" }}>
                       {/* <EditCalendarRoundedIcon sx={{ fontSize: '120px', color: '#c6c7c7', }} /> */}
@@ -729,7 +716,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
                               <Typography>Job name for client</Typography>
                               <TextField fullWidth name="subject" value={inputText + selectedJobShortcut} onChange={handlechatsubject} placeholder="Job name for client" size="small" sx={{ background: "#fff", mt: 2 }} />
 
-                              <Box>
+                              {/* <Box>
                                 <Button variant="contained" color="primary" onClick={toggleShortcodeDropdown} sx={{ mt: 2 }}>
                                   Add Shortcode
                                 </Button>
@@ -763,7 +750,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
                                     </List>
                                   </Box>
                                 </Popover>
-                              </Box>
+                              </Box> */}
                               <Box mt={2}>
                                 <Typography>Status</Typography>
                                 <Autocomplete
@@ -836,7 +823,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
                                   }}
                                 />
                               </Box>
-                              <Box>
+                              {/* <Box>
                                 <Button variant="contained" color="primary" onClick={toggleDescriptionDropdown} sx={{ mt: 2 }}>
                                   Add Shortcode
                                 </Button>
@@ -871,7 +858,7 @@ const CreateJob = ({ charLimit = 4000 }) => {
                                     </List>
                                   </Box>
                                 </Popover>
-                              </Box>
+                              </Box> */}
                             </>
                           )}
                         </Box>

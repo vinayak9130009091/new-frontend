@@ -226,7 +226,7 @@ const SendAccountEmail = ({ selectedAccounts, onClose }) => {
   const [userdata, setUserData] = useState([]);
   const [selecteduser, setSelectedUser] = useState();
 
-  const [selectedto, setSelectedTo] = useState();
+  const [selectedto, setSelectedTo] = useState([]);
   const [emailTemplatedata, setEmailTemplateData] = useState([]);
   const [emailTemplate, setEmailTemplate] = useState();
   const [fetchtemplatedata, setFetchTemplateData] = useState();
@@ -335,6 +335,35 @@ const SendAccountEmail = ({ selectedAccounts, onClose }) => {
     setEmailSubject(value);
   };
 
+  const [accountdata, setaccountdata] = useState([]);
+
+  const fetchAccountData = async () => {
+    try {
+      const response = await fetch(`${ACCOUNT_API}/accounts/accountdetails`);
+      const data = await response.json();
+      setaccountdata(data.accounts);
+
+      // Map accounts to options
+      const options = data.accounts.map((account) => ({
+        value: account._id,
+        label: account.accountName,
+      }));
+      setAccountOptions(options);
+
+      // Filter options based on selectedAccounts
+      const selectedOptions = options.filter((option) => selectedAccounts.includes(option.value));
+      console.log("Selected Options:", selectedOptions);
+      setSelectedTo(selectedOptions);
+      setCombinedValues(selectedOptions.map((option) => option.value));
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+  console.log(selectedto);
+
+  useEffect(() => {
+    fetchAccountData();
+  }, []);
   const [accountOptions, setAccountOptions] = useState([]);
 
   const ACCOUNT_API = process.env.REACT_APP_ACCOUNTS_URL;
@@ -374,7 +403,9 @@ const SendAccountEmail = ({ selectedAccounts, onClose }) => {
         console.log(account);
         options.push({ value: account.account._id, label: account.account.accountName });
       }
-      setAccountOptions(options);
+      // setAccountOptions(options);
+      setSelectedTo(options);
+      setCombinedValues(options.map((option) => option.value));
     };
 
     populateOptions();
@@ -493,7 +524,22 @@ const SendAccountEmail = ({ selectedAccounts, onClose }) => {
 
         <Box sx={{ mt: 2 }}>
           <label className="email-input-label">To</label>
-          <Autocomplete options={accountOptions} sx={{ mt: 2, mb: 2, backgroundColor: "#fff" }} size="small" value={selectedto} onChange={handleToselect} isOptionEqualToValue={(option, value) => option.value === value.value} getOptionLabel={(option) => option.label || ""} renderInput={(params) => <TextField {...params} placeholder="To" />} />
+          {/* <Autocomplete multiple options={accountOptions} sx={{ mt: 2, mb: 2, backgroundColor: "#fff" }} size="small" value={selectedto} onChange={handleToselect} isOptionEqualToValue={(option, value) => option.value === value.value} getOptionLabel={(option) => option.label || ""} renderInput={(params) => <TextField {...params} placeholder="To" />} /> */}
+          <Autocomplete
+            multiple
+            options={accountOptions}
+            value={selectedto}
+            onChange={handleToselect}
+            getOptionLabel={(option) => option.label}
+            isOptionEqualToValue={(option, value) => option.value === value.value}
+            renderOption={(props, option) => (
+              <Box component="li" {...props} sx={{ cursor: "pointer", margin: "5px 10px" }}>
+                {option.label}
+              </Box>
+            )}
+            renderInput={(params) => <TextField {...params} placeholder="Select Accounts" variant="outlined" size="small" sx={{ backgroundColor: "#fff" }} />}
+            sx={{ width: "100%", marginTop: "8px" }}
+          />
         </Box>
 
         <Box sx={{ mt: 2 }}>

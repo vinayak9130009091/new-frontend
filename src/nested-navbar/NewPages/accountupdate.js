@@ -48,6 +48,7 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
 
   useEffect(() => {
     fetchData();
+    fetchContacts();
   }, []);
   const [tags, setTags] = useState([]);
   const fetchData = async () => {
@@ -231,7 +232,7 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
     const selectedValues = selectedOptions.map((option) => option.value);
     setCombinedTeamMemberValues(selectedValues);
   };
-  console.log(combinedTeamMemberValues);
+
   //Account Data Integration
   const [accountName, setaccountName] = useState("");
   const [companyname, setcompanyname] = useState("");
@@ -270,6 +271,8 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
         setPostalCode("");
       }
 
+      fetchaccountdatabyid(selectedAccount._id);
+
       // Map Team Members
       const mappedTeamMembers = selectedAccount.teamMember.map((member) => ({
         value: member._id,
@@ -284,8 +287,9 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
       setSelectedUser(mappedTeamMembers.filter((member) => selectedAccount.teamMember.some((selected) => selected._id === member.value)));
 
       setCombinedTeamMemberValues(
-        mappedTeamMembers.filter((member) => selectedAccount.teamMember.some((selected) => selected._id === member.value)).map((member) => member.value) // Extract only the 'value' (ID) here
+        mappedTeamMembers.filter((member) => selectedAccount.teamMember.some((selected) => selected._id === member.value)).map((member) => member.value) // Extract only the 'value' (ID) here
       );
+
       // Map Tags
       const mappedTags =
         selectedAccount.tags?.map((tag) => ({
@@ -530,7 +534,80 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
 
     setContacts(updatedContacts);
   };
+  //***************Link Existing Contact */
 
+  const [filteredContacts, setFilteredContacts] = useState(contacts);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedContacts, setSelectedContacts] = useState([]);
+  const [accountDatabyid, setAccountDatabyid] = useState([]);
+
+  const fetchaccountdatabyid = (accountid) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    const requestOptions = {
+      method: "GET",
+      headers: myHeaders,
+      redirect: "follow",
+    };
+
+    fetch(`${ACCOUNT_API}/accounts/accountdetails/getAccountbyIdAll/${accountid}`, requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+        setAccountDatabyid(result.account);
+      })
+      .catch((error) => console.error(error));
+  };
+
+  const getSelectedIds = () => {
+    return selectedContacts.join(", "); // Just join the IDs array into a string
+  };
+
+  useEffect(() => {
+    setFilteredContacts(contactData.filter((contact) => contact.name.toLowerCase().includes(searchQuery.toLowerCase())));
+  }, [searchQuery, contactData]);
+
+  const handleContactName = () => {};
+
+  const handleLinkAccounts = () => {
+    linkContactstoAccount(selectedContacts);
+  };
+  console.log(selectedContacts);
+
+  const linkContactstoAccount = (selectedContacts) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+    const existingContactIds = accountDatabyid.contacts.map((contact) => contact._id);
+    // Combine existing contact IDs with the new ones
+    const combinedContacts = [...existingContactIds, ...selectedContacts];
+    console.log(combinedContacts);
+    const raw = JSON.stringify({
+      contacts: combinedContacts,
+    });
+    console.log(raw);
+    const requestOptions = {
+      method: "PATCH",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+    fetch(`${ACCOUNT_API}/accounts/accountdetails/${accountDatabyid._id}`, requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+        // handleCloseDrawerofAddContact();
+        handleDialogClose();
+        toast.success("contact added successfully");
+        fetchContacts();
+      })
+      .catch((error) => console.error(error));
+  };
+
+  console.log(contactData);
+  const handleDialogClose = () => {
+    setOpen(false);
+  };
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: 2, borderBottom: "1px solid grey" }}>
@@ -943,20 +1020,53 @@ const Accountupdate = ({ onClose, selectedAccount }) => {
 
                     <Box mt={5}>
                       <InputLabel sx={{ color: "black" }}>Serch for contact</InputLabel>
-                      <TextField
+                      {/* <TextField
                         margin="normal"
                         fullWidth
                         name="postalCode"
-                        // onChange={(e) => SetCZipPostalCode(e.target.value)}
+                        //onChange={(e) => SetCZipPostalCode(e.target.value)}
                         placeholder="start typng the contact name,phone number or email to serch"
                         size="small"
+                      /> */}
+
+                      <Autocomplete
+                        multiple // Enable multiple selections
+                        options={filteredContacts}
+                        getOptionLabel={(option) => option.name} // Specify how to display the option
+                        // onInputChange={(event, newValue) => {
+                        //   setSearchQuery(newValue);
+                        // }}
+                        onChange={(event, newValue) => {
+                          // Update selected contacts with only IDs
+                          const ids = newValue.map((contact) => contact.id); // Extract IDs from selected contacts
+                          setSelectedContacts(ids); // Update selectedContacts with IDs
+                          console.log(getSelectedIds()); // Log the comma-separated IDs
+                        }}
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            variant="outlined"
+                            placeholder="Search contacts..."
+                            onFocus={(e) => e.stopPropagation()} // Prevent dropdown from closing
+                          />
+                        )}
+                        renderOption={(props, option) => (
+                          <li {...props} key={option.id}>
+                            {option.name}
+                          </li>
+                        )}
+                        fullWidth
+                        disableClearable // Prevents clearing the input by clicking the clear button
+                        value={filteredContacts.filter((contact) => selectedContacts.includes(contact.id))} // Control the selected value
                       />
                     </Box>
                   </DialogContent>
                   <DialogActions>
-                    <Button variant="contained">Add</Button>
-                    <Button onClick={onClose} color="primary">
-                      Cancel
+                    <Button variant="contained" onClick={handleLinkAccounts}>
+                      Add
+                    </Button>
+                    <Button onClick={handleDialogClose} color="primary">
+                      Cancel        
                     </Button>
                   </DialogActions>
                 </Dialog>

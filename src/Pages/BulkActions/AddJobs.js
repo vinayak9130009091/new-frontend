@@ -179,6 +179,19 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
         setduein(template.duein); // You might need to adjust this
         setStartsInDuration(template.startsinduration);
         setdueinduration(template.dueinduration);
+
+        setClientFacingStatus(template.showinclientportal);
+        setInputText(template.jobnameforclient);
+        if (template.clientfacingstatus && template.clientfacingstatus) {
+          const clientStatusData = {
+            value: template.clientfacingstatus._id,
+            label: template.clientfacingstatus.clientfacingName,
+            clientfacingColour: template.clientfacingstatus.clientfacingColour,
+          };
+
+          setSelectedJob(clientStatusData);
+        }
+        setClientDescription(template.clientfacingDescription);
       } catch (error) {
         console.error("Error fetching template data:", error);
       }
@@ -283,7 +296,6 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
       startsinduration: startsInDuration,
       duein: duein,
       dueinduration: dueinduration,
-      comments: comments,
       showinclientportal: clientFacingStatus,
       jobnameforclient: inputText,
       clientfacingstatus: selectedJob?.value,
@@ -322,21 +334,6 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
     setTimeout(() => {}, 1000);
   };
 
-  const [comments, setComments] = useState([]);
-
-  const addCommentField = () => {
-    setComments([...comments, ""]); // Add a new empty comment field
-  };
-  console.log(comments);
-  const handleCommentChange = (index, value) => {
-    const updatedComments = [...comments];
-    updatedComments[index] = value; // Update the specific comment field
-    setComments(updatedComments);
-  };
-  const deleteCommentField = (index) => {
-    const updatedComments = comments.filter((_, i) => i !== index); // Remove the comment at the specified index
-    setComments(updatedComments);
-  };
   const [shortcuts, setShortcuts] = useState([]);
   const [filteredShortcuts, setFilteredShortcuts] = useState([]);
   const [selectedOption, setSelectedOption] = useState("contacts");
@@ -531,12 +528,11 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
       <Box>
         <form>
           <Box>
-            <Button onClick={addCommentField}>Add comments</Button>
             <Box mt={2} mb={2}>
               <hr />
             </Box>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={5} ml={2} className="left-side-container" mt={2}>
+              <Grid padding={2}>
                 <Box>
                   <label className="job-input-label">Accounts</label>
 
@@ -751,30 +747,7 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
                     </Box>
                   </>
                 )}
-              </Grid>
-              <Grid item xs={12} sm={1} sx={{ display: { xs: "none", sm: "block" } }}>
-                <Box
-                  className="vertical-line"
-                  sx={{
-                    // borderLeft: '1px solid black',
-                    height: "100%",
-                    ml: 2,
-                  }}
-                ></Box>
-              </Grid>
-              {/* <Grid item xs={12} sm={5} ml={{ xs: 0, sm: 3 }} className='right-side-container' mt={2}>
-                                <Box sx={{ display: 'flex', flexDirection: 'column' }}>
-                                    <Box>
-                                        <Typography variant='h5' fontWeight={'bold'}>Comments</Typography>
-                                        <Typography textAlign={'center'}>No comments attached</Typography>
-                                    </Box>
-                                    <Box mt={2}>
-                                        <Typography variant='h5' fontWeight={'bold'}>Wiki pages</Typography>
-                                        <Typography textAlign={'center'}>No wiki pages attached</Typography>
-                                    </Box>
-                                </Box>
-                            </Grid> */}
-              <Grid item xs={12} sm={5} mt={2}>
+
                 <Box sx={{ display: "flex", flexDirection: "column" }}>
                   <Box mt={2}>
                     <Box style={{ display: "flex", alignItems: "center" }}>
@@ -792,41 +765,6 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
                               <Typography>Job name for client</Typography>
                               <TextField fullWidth name="subject" value={inputText + selectedJobShortcut} onChange={handlechatsubject} placeholder="Job name for client" size="small" sx={{ background: "#fff", mt: 2 }} />
 
-                              <Box>
-                                <Button variant="contained" color="primary" onClick={toggleShortcodeDropdown} sx={{ mt: 2 }}>
-                                  Add Shortcode
-                                </Button>
-                                <Popover
-                                  open={showDropdownClientJob}
-                                  anchorEl={anchorElClientJob}
-                                  onClose={handleCloseDropdown}
-                                  anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "left",
-                                  }}
-                                  transformOrigin={{
-                                    vertical: "top",
-                                    horizontal: "left",
-                                  }}
-                                >
-                                  <Box>
-                                    <List className="dropdown-list" sx={{ width: "300px", height: "300px", cursor: "pointer" }}>
-                                      {filteredShortcuts.map((shortcut, index) => (
-                                        <ListItem key={index} onClick={() => handleJobAddShortcut(shortcut.value)}>
-                                          <ListItemText
-                                            primary={shortcut.title}
-                                            primaryTypographyProps={{
-                                              style: {
-                                                fontWeight: shortcut.isBold ? "bold" : "normal",
-                                              },
-                                            }}
-                                          />
-                                        </ListItem>
-                                      ))}
-                                    </List>
-                                  </Box>
-                                </Popover>
-                              </Box>
                               <Box mt={2}>
                                 <Typography>Status</Typography>
                                 <Autocomplete
@@ -899,58 +837,12 @@ const CreateBulkJob = ({ selectedAccounts, onClose, charLimit = 4000 }) => {
                                   }}
                                 />
                               </Box>
-                              <Box>
-                                <Button variant="contained" color="primary" onClick={toggleDescriptionDropdown} sx={{ mt: 2 }}>
-                                  Add Shortcode
-                                </Button>
-
-                                <Popover
-                                  open={showDropdownDescription}
-                                  anchorEl={anchorElDescription}
-                                  onClose={handleCloseDropdown}
-                                  anchorOrigin={{
-                                    vertical: "bottom",
-                                    horizontal: "left",
-                                  }}
-                                  transformOrigin={{
-                                    vertical: "top",
-                                    horizontal: "left",
-                                  }}
-                                >
-                                  <Box>
-                                    <List className="dropdown-list" sx={{ width: "300px", height: "300px", cursor: "pointer" }}>
-                                      {filteredShortcuts.map((shortcut, index) => (
-                                        <ListItem key={index} onClick={() => handleDescriptionAddShortcut(shortcut.value)}>
-                                          <ListItemText
-                                            primary={shortcut.title}
-                                            primaryTypographyProps={{
-                                              style: {
-                                                fontWeight: shortcut.isBold ? "bold" : "normal",
-                                              },
-                                            }}
-                                          />
-                                        </ListItem>
-                                      ))}
-                                    </List>
-                                  </Box>
-                                </Popover>
-                              </Box>
                             </>
                           )}
                         </Box>
                       </Box>
                     </Box>
                   </Box>
-                </Box>
-                <Box>
-                  {comments.map((comment, index) => (
-                    <div key={index} style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                      <TextField value={comment} onChange={(e) => handleCommentChange(index, e.target.value)} placeholder={`Comment ${index + 1}`} variant="outlined" fullWidth multiline margin="normal" />
-                      <IconButton onClick={() => deleteCommentField(index)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </div>
-                  ))}
                 </Box>
               </Grid>
             </Grid>

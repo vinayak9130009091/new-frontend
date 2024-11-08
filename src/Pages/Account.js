@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Drawer, TablePagination, Chip, Tooltip, Autocomplete, Box, Divider, Typography, OutlinedInput, MenuItem as MuiMenuItem, FormControl, InputLabel, Menu, Button, IconButton, Select, MenuItem, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Paper } from "@mui/material";
+import { DialogTitle, DialogContent, DialogActions, Drawer, TablePagination, Chip, Tooltip, Autocomplete, Box, Divider, Typography, OutlinedInput, MenuItem as MuiMenuItem, FormControl, InputLabel, Menu, Button, IconButton, Select, MenuItem, TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Checkbox, Paper } from "@mui/material";
 import axios from "axios";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { RxCross2 } from "react-icons/rx";
@@ -17,6 +17,8 @@ import AddBulkOrganizer from "./BulkActions/AddBulkOrganizer";
 import ManageTags from "./BulkActions/ManageTags";
 import ManageTeams from "./BulkActions/ManageTeams";
 import { useTheme } from "@mui/material/styles";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import CloseIcon from "@mui/icons-material/Close";
 import useMediaQuery from "@mui/material/useMediaQuery";
 const FixedColumnTable = () => {
   const theme = useTheme();
@@ -263,6 +265,8 @@ const FixedColumnTable = () => {
 
   const handleEditLoginNotifyEmailSync = () => {
     console.log("EditLoginNotifyEmailSync triggered");
+    // handleupdatecontacts(selected)
+    setSidebarOpen(true);
     handleClose();
   };
 
@@ -295,6 +299,84 @@ const FixedColumnTable = () => {
         toast.error("An error occurred while submitting the form"); // Display error toast
       });
   };
+
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleCloseSidebar = () => {
+    setSidebarOpen(false);
+  };
+
+  const [settings, setSettings] = useState({
+    login: undefined, // undefined means no action selected
+    notify: undefined,
+    emailSync: undefined,
+  });
+
+  // Handle the change in the select dropdown
+  const handleSettingChange = (setting, value) => {
+    // Map the dropdown values to boolean or undefined
+    const mappedValue = value === "Assign to all" ? true : value === "Remove from all" ? false : undefined;
+
+    setSettings((prevState) => ({
+      ...prevState,
+      [setting]: mappedValue,
+    }));
+  };
+
+  const handleupdatecontacts = () => {
+    submitupdatecontacts(selected);
+  };
+
+  const submitupdatecontacts = (selected) => {
+    const myHeaders = new Headers();
+    myHeaders.append("Content-Type", "application/json");
+
+    // // Safely extract only the necessary fields from settings
+    // const { login, notify, emailSync } = settings;
+
+    // // Ensure login, notify, and emailSync are booleans or null (not components or DOM elements)
+    // const payload = {
+    //   accountIds: selected,
+    //   login: login === undefined ? null : login, // Nullify if undefined
+    //   notify: notify === undefined ? null : notify,
+    //   emailSync: emailSync === undefined ? null : emailSync,
+    // };
+
+    const filteredSettings = Object.entries(settings)
+      .filter(([_, value]) => value !== undefined) // Only include true or false
+      .reduce((acc, [key, value]) => {
+        acc[key] = value;
+        return acc;
+      }, {});
+
+    // Create the payload with selected account IDs and filtered settings
+    const payload = {
+      accountIds: selected,
+      ...filteredSettings, // Spread only defined settings into the payload
+    };
+
+    // Debugging: log the payload to check its structure
+    console.log("Payload being sent:", payload);
+
+    // Prepare the raw data for the API call
+    const raw = JSON.stringify(payload);
+
+    const requestOptions = {
+      method: "POST",
+      headers: myHeaders,
+      body: raw,
+      redirect: "follow",
+    };
+
+    fetch(`${ACCOUNT_API}/accounts/accounts/update-contacts`, requestOptions)
+      .then((response) => response.json())
+      .then((result) => {
+        console.log(result);
+        toast.success("Bulk edit in progress, you will receive an email and Inbox+ notification when complete.");
+        handleCloseSidebar();
+      })
+      .catch((error) => console.error(error));
+  };
   return (
     <>
       <div style={{ display: "flex", padding: "10px", marginBottom: "20px" }}>
@@ -324,8 +406,7 @@ const FixedColumnTable = () => {
                   color: "white",
                 },
               },
-            }}
-          >
+            }}>
             <Box>
               <Button
                 style={{
@@ -417,6 +498,93 @@ const FixedColumnTable = () => {
             </Menu>
           </div>
         )}
+        <Drawer
+          anchor="right"
+          open={isSidebarOpen}
+          onClose={handleCloseSidebar}
+          PaperProps={{
+            id: "tag-drawer",
+            sx: {
+              borderRadius: isSmallScreen ? "0" : "10px 0 0 10px",
+              width: isSmallScreen ? "100%" : 700,
+              maxWidth: "100%",
+              [theme.breakpoints.down("sm")]: {
+                width: "100%",
+              },
+            },
+          }}
+        >
+          <div style={{ padding: 16, position: "relative" }}>
+            <DialogTitle>
+              Bulk-edit login, notify, email sync
+              <Typography variant="subtitle1">For a selected account</Typography>
+              <IconButton onClick={handleCloseSidebar} style={{ position: "absolute", right: 8, top: 8 }}>
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+
+            <DialogContent dividers>
+              <Typography variant="body2" color="textSecondary" gutterBottom>
+                Bulk edit updates all email addresses linked to the selected accounts. You can adjust settings per contact within each account's Info section.
+              </Typography>
+              <Typography variant="body2" color="textSecondary">
+                Your clients will be able to access their portal through their email address and receive notifications. Additionally, you can automatically see all email history if you enable email sync.
+              </Typography>
+
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Settings</TableCell>
+                      <TableCell>Action</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {[
+                      { label: "Login", setting: "login", icon: <PersonIcon /> },
+                      { label: "Notify", setting: "notify", icon: <NotificationsIcon /> },
+                      { label: "Email sync", setting: "emailSync", icon: <EmailIcon /> },
+                    ].map((setting, index) => (
+                      <TableRow key={index}>
+                        <TableCell>
+                          <div style={{ display: "flex", alignItems: "center" }}>
+                            {setting.icon}
+                            <Typography variant="body2" style={{ marginLeft: 8 }}>
+                              {setting.label}
+                            </Typography>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={settings[setting.setting]} // Controlled value based on state
+                            onChange={(e) => handleSettingChange(setting.setting, e.target.value)} // Handle change
+                            displayEmpty
+                            inputProps={{ "aria-label": "Without label" }}
+                            sx={{ width: "150px" }}
+                          >
+                            <MenuItem value="Assign to all">Assign to all</MenuItem>
+                            <MenuItem value="Remove from all">Remove from all</MenuItem>
+                            <MenuItem value="Do nothing">Do nothing</MenuItem>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </DialogContent>
+
+            <DialogActions>
+              <Button variant="contained" color="primary" onClick={handleupdatecontacts}>
+                Save
+              </Button>
+              <Button variant="outlined" color="secondary" onClick={handleCloseSidebar}>
+                Cancel
+              </Button>
+            </DialogActions>
+          </div>
+                 
+        </Drawer>
 
         <Menu anchorEl={anchorEl} open={Boolean(anchorEl)} onClose={handleClose}>
           <MenuItem
